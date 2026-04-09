@@ -979,7 +979,17 @@ root.mainloop()
     def show_ascii_art(self, filename):
         """Показать ASCII-арт локально"""
         try:
-            art_path = Path(__file__).parent / filename
+            # Используем уменьшенные версии артов если оригиналы слишком большие
+            original_path = Path(__file__).parent / filename
+            small_filename = filename.replace('.txt', '_small.txt')
+            small_path = Path(__file__).parent / small_filename
+            
+            if small_path.exists():
+                art_path = small_path
+                print(f"Использую уменьшенную версию {small_filename}...\n")
+            else:
+                art_path = original_path
+            
             with open(art_path, 'r', encoding='utf-8') as f:
                 art = f.read()
             self.clear_screen()
@@ -992,7 +1002,17 @@ root.mainloop()
     def ssh_show_ascii_art(self, pranks, filename):
         """Показать ASCII-арт на удаленной машине в GUI окне без обрезания"""
         try:
-            art_path = Path(__file__).parent / filename
+            # Используем уменьшенные версии артов если оригиналы слишком большие
+            original_path = Path(__file__).parent / filename
+            small_filename = filename.replace('.txt', '_small.txt')
+            small_path = Path(__file__).parent / small_filename
+            
+            if small_path.exists():
+                art_path = small_path
+                print(f"Использую уменьшенную версию {small_filename}...")
+            else:
+                art_path = original_path
+            
             with open(art_path, 'r', encoding='utf-8') as f:
                 art = f.read()
             
@@ -1013,43 +1033,37 @@ root.mainloop()
 import tkinter as tk
 import tkinter.font as tkFont
 
-# Рассчитываем размер шрифта в зависимости от размера арта
-def calculate_font_size(art_lines):
-    height_chars = len(art_lines)
-    width_chars = max([len(line) for line in art_lines]) if art_lines else 80
-    
-    # Определяем размеры экрана
-    root = tk.Tk()
-    root.withdraw()
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    root.destroy()
-    
-    # Рассчитываем размер шрифта чтобы всё поместилось
-    font_w = screen_width // width_chars if width_chars > 0 else 10
-    font_h = screen_height // height_chars if height_chars > 0 else 20
-    
-    font_size = min(font_w, font_h, 20)  # максимум 20, минимум расчёт
-    return max(font_size, 6)  # минимум 6
-
 root = tk.Tk()
 root.title("ASCII Art")
 root.attributes('-fullscreen', True)
 root.configure(bg='{bg_color}')
 
-# Разбиваем арт на строки и рассчитываем размер шрифта
+# Разбиваем арт на строки
 art_lines = """{art}""".splitlines()
-font_size = calculate_font_size(art_lines)
 
 # Создаем Canvas для отображения текста
 canvas = tk.Canvas(root, bg='{bg_color}', highlightthickness=0)
 canvas.pack(fill='both', expand=True)
 
-# Сначала нужно дождаться полной инициализации окна
+# Ждем полной инициализации окна и отрисовываем арт
 def render_art():
     # Получаем размеры окна
     canvas_width = root.winfo_width()
     canvas_height = root.winfo_height()
+    
+    # Рассчитываем размер шрифта в зависимости от размера арта и экрана
+    height_chars = len(art_lines)
+    width_chars = max([len(line) for line in art_lines]) if art_lines else 80
+    
+    # Определяем размер шрифта
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    
+    font_w = screen_width // width_chars if width_chars > 0 else 10
+    font_h = screen_height // height_chars if height_chars > 0 else 20
+    
+    font_size = min(font_w, font_h, 20)  # максимум 20
+    font_size = max(font_size, 8)  # минимум 8 для читаемости
     
     # Создаем шрифт
     font = tkFont.Font(family='Courier', size=font_size)
@@ -1061,7 +1075,6 @@ def render_art():
         y_pos = y_offset + i * font.metrics('linespace')
         canvas.create_text(canvas_width // 2, y_pos, text=line, fill='{color}', font=font, anchor='center')
 
-# Ждем полной инициализации окна и отрисовываем арт
 root.after(100, render_art)
 
 def close(event=None):
