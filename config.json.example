@@ -1,0 +1,18 @@
+{
+  "ssh_hosts": [],
+  "last_mode": null,
+  "settings": {
+    "auto_save_hosts": false,
+    "default_ssh_port": 22,
+    "prank_duration": 10,
+    "animation_speed": "fast"
+  },
+  "favorites": {
+    "pranks": [],
+    "commands": []
+  },
+  "history": {
+    "last_used": null,
+    "commands": []
+  }
+}

