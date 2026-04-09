@@ -263,10 +263,11 @@ class HamsterPrank:
         while True:
             self.clear_screen()
             print("=== ПРАНКИ В КОНСОЛИ (SSH) ===\n")
-            print("1. Заливка экрана")
+            print("1. Заливка символами")
             print("2. Матрица")
             print("3. Глитч эффект")
             print("4. Тряска экрана")
+            print("5. Кастомная заливка")
             print("0. Назад")
             print()
             
@@ -291,10 +292,22 @@ class HamsterPrank:
                 pranks.glitch_effect(duration)
                 input("\nНажми Enter...")
             elif choice == '4':
-                duration = input("Длительность (сек, по умолчанию 10): ").strip()
-                duration = int(duration) if duration.isdigit() else 10
+                duration = input("Длительность (сек, по умолчанию 5): ").strip()
+                duration = int(duration) if duration.isdigit() else 5
                 print("\nЗапускаю тряску на удаленке...")
                 pranks.screen_shake(duration)
+                input("\nНажми Enter...")
+            elif choice == '5':
+                char = input("Символ для заливки (Enter = случайные): ").strip()
+                dur = input("Длительность в секундах (10): ").strip()
+                speed = input("Скорость (slow/medium/fast/insane): ").strip()
+                
+                duration = int(dur) if dur.isdigit() else 10
+                char = char if char else None
+                speed = speed if speed in ['slow', 'medium', 'fast', 'insane'] else 'fast'
+                
+                print("\nЗапускаю кастомную заливку на удаленке...")
+                pranks.screen_flood(duration, char, speed)
                 input("\nНажми Enter...")
             elif choice == '0':
                 break
@@ -341,29 +354,315 @@ class HamsterPrank:
         while True:
             self.clear_screen()
             print("=== ТЕКСТОВЫЕ ЭФФЕКТЫ (SSH) ===\n")
-            print("1. Волна текста")
-            print("2. Радужный текст")
+            print("1. Текст в рамке")
+            print("2. Заполнить экран текстом")
+            print("3. Волна")
+            print("4. Печатная машинка")
+            print("5. Радужный текст")
+            print("6. Приближение")
+            print("7. Тряска")
+            print("8. Спам")
             print("0. Назад")
             print()
             
             choice = input("Выбери: ").strip()
             
-            if choice == '1':
-                text = input("Текст: ").strip()
-                if not text:
-                    text = "ВОЛНА!"
-                print("\nЗапускаю волну на удаленке...")
-                pranks.wave_text(text)
-                input("\nНажми Enter...")
-            elif choice == '2':
-                text = input("Текст: ").strip()
-                if not text:
-                    text = "РАДУГА!"
-                print("\nЗапускаю радугу на удаленке...")
-                pranks.rainbow_text(text)
-                input("\nНажми Enter...")
-            elif choice == '0':
+            if choice == '0':
                 break
+            elif choice in ['1', '2', '3', '4', '5', '6', '7', '8']:
+                text = input("Текст: ").strip()
+                if not text:
+                    text = "ПРАНК!"
+                
+                print("\nЗапускаю эффект на удаленке...")
+                
+                # Создаем соответствующий GUI скрипт для каждого типа
+                if choice == '1':  # Текст в рамке
+                    script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import tkinter as tk
+import tkinter.font as tkFont
+
+root = tk.Tk()
+root.title("Текст в рамке")
+root.attributes('-fullscreen', True)
+root.configure(bg='red')
+
+font = tkFont.Font(family='Courier', size=14, weight='bold')
+text_widget = tk.Text(root, bg='black', fg='white', font=font, relief='solid', bd=2)
+text_widget.pack(expand=True, fill='both', padx=50, pady=50)
+text_widget.insert('1.0', '{text}')
+text_widget.config(state='disabled')
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after(5000, close)
+root.mainloop()
+'''
+                elif choice == '2':  # Заполнить экран текстом
+                    script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import tkinter as tk
+import tkinter.font as tkFont
+import random
+
+root = tk.Tk()
+root.title("Заполнение текстом")
+root.attributes('-fullscreen', True)
+root.configure(bg='black')
+
+canvas = tk.Canvas(root, bg='black', highlightthickness=0)
+canvas.pack(fill='both', expand=True)
+
+def draw_text():
+    canvas.delete('all')
+    width, height = root.winfo_width(), root.winfo_height()
+    
+    for _ in range(50):
+        x = random.randint(0, width)
+        y = random.randint(0, height)
+        canvas.create_text(x, y, text='{text}', fill='white', font=('Courier', 16))
+
+for _ in range(10):
+    root.after(_ * 100, draw_text)
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after(5000, close)
+root.mainloop()
+'''
+                elif choice == '3':  # Волна
+                    script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import tkinter as tk
+import math
+import time
+
+root = tk.Tk()
+root.title("Волна")
+root.attributes('-fullscreen', True)
+root.configure(bg='black')
+
+canvas = tk.Canvas(root, bg='black', highlightthickness=0)
+canvas.pack(fill='both', expand=True)
+
+width, height = root.winfo_width(), root.winfo_height()
+chars = list('{text}')
+char_count = len(chars)
+
+def animate_wave():
+    canvas.delete('all')
+    center_y = height // 2
+    amp = 50
+    freq = 0.1
+    
+    for i, char in enumerate(chars):
+        x = (width // char_count) * i + 50
+        y = center_y + amp * math.sin(time.time() * 5 + i * freq)
+        canvas.create_text(x, y, text=char, fill='cyan', font=('Courier', 20))
+
+root.after(50, lambda: animate_wave())
+root.update()
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after(5000, close)
+root.mainloop()
+'''
+                elif choice == '4':  # Печатная машинка
+                    script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import tkinter as tk
+import time
+
+root = tk.Tk()
+root.title("Печатная машинка")
+root.attributes('-fullscreen', True)
+root.configure(bg='black')
+
+text_widget = tk.Text(root, bg='black', fg='green', font=('Courier', 24), wrap='word')
+text_widget.pack(expand=True, fill='both', padx=100, pady=200)
+
+def type_text():
+    text = '{text}'
+    for i in range(len(text) + 1):
+        text_widget.delete('1.0', 'end')
+        text_widget.insert('1.0', text[:i])
+        text_widget.see('end')
+        root.update()
+        time.sleep(0.1)
+
+type_text()
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after(5000, close)
+root.mainloop()
+'''
+                elif choice == '5':  # Радужный текст
+                    script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import tkinter as tk
+import tkinter.font as tkFont
+
+root = tk.Tk()
+root.title("Радужный текст")
+root.attributes('-fullscreen', True)
+root.configure(bg='black')
+
+colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3']
+text = '{text}'
+text_length = len(text)
+
+canvas = tk.Canvas(root, bg='black', highlightthickness=0)
+canvas.pack(fill='both', expand=True)
+
+for i, char in enumerate(text):
+    color = colors[i % len(colors)]
+    x = 50 + i * 30
+    canvas.create_text(x, height//2, text=char, fill=color, font=('Courier', 24))
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after(5000, close)
+root.mainloop()
+'''
+                elif choice == '6':  # Приближение
+                    script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import tkinter as tk
+import math
+
+root = tk.Tk()
+root.title("Приближение")
+root.attributes('-fullscreen', True)
+root.configure(bg='black')
+
+canvas = tk.Canvas(root, bg='black', highlightthickness=0)
+canvas.pack(fill='both', expand=True)
+
+def zoom_effect():
+    canvas.delete('all')
+    width, height = root.winfo_width(), root.winfo_height()
+    
+    for scale in range(1, 6):
+        font_size = 10 * scale
+        canvas.after(scale * 200, lambda fs=font_size: canvas.create_text(
+            width//2, height//2, text='{text}', fill='yellow', 
+            font=('Arial', fs), tags='zoom'))
+
+for scale in range(1, 6):
+    root.after(scale * 200, zoom_effect)
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after(5000, close)
+root.mainloop()
+'''
+                elif choice == '7':  # Тряска
+                    script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import tkinter as tk
+import random
+import time
+
+root = tk.Tk()
+root.title("Тряска")
+root.attributes('-fullscreen', True)
+root.configure(bg='black')
+
+text_widget = tk.Text(root, bg='black', fg='white', font=('Courier', 24), wrap='word')
+text_widget.pack(expand=True, fill='both', padx=100, pady=200)
+text_widget.insert('1.0', '{text}')
+text_widget.tag_add('shake', '1.0', 'end')
+
+def shake():
+    dx = random.randint(-5, 5)
+    dy = random.randint(-5, 5)
+    root.geometry(f"+{root.winfo_x() + dx}+{root.winfo_y() + dy}")
+    root.after(50, shake)
+
+shake()
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after(5000, close)
+root.mainloop()
+'''
+                elif choice == '8':  # Спам
+                    script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import tkinter as tk
+import random
+
+root = tk.Tk()
+root.title("Спам")
+root.attributes('-fullscreen', True)
+root.configure(bg='black')
+
+canvas = tk.Canvas(root, bg='black', highlightthickness=0)
+canvas.pack(fill='both', expand=True)
+
+for _ in range(20):
+    x = random.randint(50, root.winfo_width()-50)
+    y = random.randint(50, root.winfo_height()-50)
+    canvas.create_text(x, y, text='{text}', fill='white', font=('Courier', random.randint(10, 30)))
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after(5000, close)
+root.mainloop()
+'''
+
+                # Загружаем и запускаем скрипт на удаленке
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                    f.write(script)
+                    local_path = f.name
+                
+                remote_path = f"~/.text_effect_{choice}.py"
+                print(f"Загружаю Эффект {choice} на удаленку...")
+                success, msg = pranks.client.upload_file(local_path, remote_path)
+                
+                if success:
+                    print("Запускаю эффект на удаленке...")
+                    pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
+                    time.sleep(1)
+                    pranks.client.execute_command(f"rm {remote_path}")
+                    print("✓ Эффект запущен на удаленке!")
+                else:
+                    print(f"Ошибка: {msg}")
+                
+                import os
+                os.unlink(local_path)
+                input("\nНажми Enter...")
+            else:
+                print("Неверный выбор!")
+                input("\nНажми Enter...")
     
     def ssh_window_control(self, pranks):
         """Подменю управления окнами через SSH"""
@@ -539,7 +838,7 @@ class HamsterPrank:
             input("\nНажми Enter...")
     
     def ssh_show_ascii_art(self, pranks, filename):
-        """Показать ASCII-арт на удаленной машине в GUI окне"""
+        """Показать ASCII-арт на удаленной машине в GUI окне по центру"""
         try:
             art_path = Path(__file__).parent / filename
             with open(art_path, 'r', encoding='utf-8') as f:
@@ -556,23 +855,37 @@ class HamsterPrank:
                 color = 'white'
                 bg_color = 'black'
             
-            # Создаем скрипт для показа ASCII-арт в GUI окне
+            # Создаем скрипт для показа ASCII-арт в GUI окне по центру
             script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
-import sys
-
-art = """{art}"""
+import tkinter.font as tkFont
 
 root = tk.Tk()
 root.title("ASCII Art")
 root.attributes('-fullscreen', True)
 root.configure(bg='{bg_color}')
 
-text = tk.Text(root, bg='{bg_color}', fg='{color}', font=('Courier', 10), wrap='none')
-text.pack(fill='both', expand=True)
-text.insert('1.0', art)
-text.config(state='disabled')
+# Создаем Canvas для центрирования
+canvas = tk.Canvas(root, bg='{bg_color}', highlightthickness=0)
+canvas.pack(fill='both', expand=True)
+
+def show_centered_art():
+    # Очищаем canvas
+    canvas.delete('all')
+    
+    # Получаем размеры окна
+    width = root.winfo_width()
+    height = root.winfo_height()
+    
+    # Отображаем арт по центру
+    text_widget = tk.Text(canvas, bg='{bg_color}', fg='{color}', font=('Courier', 10), wrap='none')
+    text_widget.insert('1.0', """{art}""")
+    text_widget.config(state='disabled')
+    text_window = canvas.create_window(width//2, height//2, anchor='center', window=text_widget)
+
+# Ждем немного и показываем арт по центру
+root.after(100, show_centered_art)
 
 def close(event=None):
     root.destroy()
@@ -580,7 +893,6 @@ def close(event=None):
 root.bind('<Escape>', close)
 root.bind('q', close)
 root.bind('Q', close)
-
 root.after(5000, close)
 root.mainloop()
 '''
@@ -601,7 +913,7 @@ root.mainloop()
                 pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
                 time.sleep(1)
                 pranks.client.execute_command(f"rm {remote_path}")
-                print("✓ ASCII-арт показан на удаленке!")
+                print("✓ ASCII-арт показан по центру на удаленке!")
             else:
                 print(f"Ошибка: {msg}")
             
