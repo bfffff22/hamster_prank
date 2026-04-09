@@ -320,6 +320,8 @@ class HamsterPrank:
             print("1. Полноэкранный текст")
             print("2. Полноэкранная заливка")
             print("3. Китайская атака ⭐")
+            print("4. Полноэкранная картинка")
+            print("5. Спам окнами")
             print("0. Назад")
             print()
             
@@ -345,6 +347,72 @@ class HamsterPrank:
                 duration = int(duration) if duration.isdigit() else 15
                 print("\nЗапускаю китайскую атаку на удаленке...")
                 pranks.chinese_attack(duration)
+                input("\nНажми Enter...")
+            elif choice == '4':
+                image_url = input("URL картинки: ").strip()
+                if not image_url:
+                    print("Нужно указать URL картинки")
+                    input("\nНажми Enter...")
+                    continue
+                duration = input("Длительность (сек, по умолчанию 5): ").strip()
+                duration = int(duration) if duration.isdigit() else 5
+                print("\nЗапускаю отображение картинки на удаленке...")
+                # Используем команду для загрузки и показа картинки
+                cmd = f'wget "{image_url}" -O /tmp/temp_img && DISPLAY=:0 feh -F /tmp/temp_img &'
+                pranks.client.execute_command(cmd)
+                time.sleep(duration)
+                pranks.client.execute_command('killall feh 2>/dev/null')
+                print("✓ Картинка показана!")
+                input("\nНажми Enter...")
+            elif choice == '5':
+                text = input("Текст для окна: ").strip()
+                if not text:
+                    text = "ПРАНК!"
+                count = input("Количество окон (по умолчанию 5): ").strip()
+                count = int(count) if count.isdigit() else 5
+                duration = input("Длительность (сек, по умолчанию 3): ").strip()
+                duration = int(duration) if duration.isdigit() else 3
+                print(f"\nЗапускаю {count} окон на удаленке...")
+                
+                for i in range(count):
+                    # Создаем GUI окно с текстом
+                    script = f'''#!/usr/bin/env python3
+import tkinter as tk
+root = tk.Tk()
+root.title("Спам окном #{i+1}")
+root.attributes('-fullscreen', True)
+root.configure(bg='red')
+
+text_widget = tk.Text(root, bg='black', fg='white', font=('Courier', 24), wrap='word')
+text_widget.pack(expand=True, fill='both', padx=100, pady=200)
+text_widget.insert('1.0', '{text} #{i+1}')
+text_widget.config(state='disabled')
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.after({duration}000, close)
+root.mainloop()
+'''
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                        f.write(script)
+                        local_path = f.name
+                    
+                    remote_path = f"~/.spam_window_{i}.py"
+                    success, msg = pranks.client.upload_file(local_path, remote_path)
+                    
+                    if success:
+                        pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
+                        time.sleep(0.5)
+                        pranks.client.execute_command(f"rm {remote_path}")
+                    
+                    import os
+                    os.unlink(local_path)
+                
+                print("✓ Окна запущены!")
                 input("\nНажми Enter...")
             elif choice == '0':
                 break
@@ -673,6 +741,12 @@ root.mainloop()
             print("2. Развернуть все окна")
             print("3. Танец окон")
             print("4. Спам программами")
+            print("5. Открыть CD привод")
+            print("6. Спам CD приводом")
+            print("7. Хаос с громкостью")
+            print("8. Озвучить текст")
+            print("9. Заблокировать экран")
+            print("10. Случайный хаос")
             print("0. Назад")
             print()
             
@@ -708,8 +782,86 @@ root.mainloop()
                 print(f"\nЗапускаю {count} экземпляров {prog} на удаленке...")
                 pranks.spam_programs(prog, count)
                 input("\nНажми Enter...")
+            elif choice == '5':
+                print("\nОткрываю CD привод на удаленке...")
+                success, output = pranks.client.execute_command('eject')
+                print(f"{'✓ CD открыт' if success else f'✗ Ошибка: {output}'}")
+                input("\nНажми Enter...")
+            elif choice == '6':
+                count = input("Количество (по умолчанию 5): ").strip()
+                count = int(count) if count.isdigit() else 5
+                print(f"\nОткрываю CD привод {count} раз на удаленке...")
+                for i in range(count):
+                    print(f"  [{i+1}] Открываю...")
+                    pranks.client.execute_command('eject')
+                    time.sleep(2)
+                    pranks.client.execute_command('eject -t')  # закрыть
+                    time.sleep(0.5)
+                print("✓ Готово!")
+                input("\nНажми Enter...")
+            elif choice == '7':
+                duration = input("Длительность (сек, по умолчанию 10): ").strip()
+                duration = int(duration) if duration.isdigit() else 10
+                print(f"\nЗапускаю хаос с громкостью ({duration} сек)...")
+                # Временная команда для случайной громкости
+                for i in range(duration):
+                    vol = (i * 10) % 101
+                    pranks.client.execute_command(f'amixer set Master {vol}% 2>/dev/null || alsamixer -c 0 -s set Master {vol}% 2>/dev/null')
+                    time.sleep(1)
+                print("✓ Хаос завершен!")
+                input("\nНажми Enter...")
+            elif choice == '8':
+                text = input("Текст для озвучки: ").strip()
+                if not text:
+                    text = "ПРАНК!"
+                print("\nОзвучиваю на удаленке...")
+                # Используем espeak если доступен
+                cmd = f'espeak "{text}" 2>/dev/null || spd-say "{text}" 2>/dev/null || echo "{text}"'
+                success, output = pranks.client.execute_command(cmd)
+                print("✓ Сообщение озвучено!" if success else f"✗ Ошибка: {output}")
+                input("\nНажми Enter...")
+            elif choice == '9':
+                confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
+                if confirm == 'y':
+                    print("\nБлокирую экран на удаленке...")
+                    success, output = pranks.client.execute_command('gnome-screensaver-command --lock 2>/dev/null || xscreensaver-command -lock 2>/dev/null || dm-tool lock 2>/dev/null')
+                    print("✓ Экран заблокирован!" if success else f"✗ Ошибка: {output}")
+                input("\nНажми Enter...")
+            elif choice == '10':
+                duration = input("Длительность хаоса (сек, по умолчанию 30): ").strip()
+                duration = int(duration) if duration.isdigit() else 30
+                print(f"\nЗапускаю случайный хаос ({duration} сек)...")
+                print("Нажмите Enter в другом окне для остановки")
+                
+                # Комбинация разных команд случайным образом
+                import random
+                commands = [
+                    'wmctrl -k on',
+                    'wmctrl -k off',
+                    'gnome-calculator 2>/dev/null &',
+                    'gedit 2>/dev/null &',
+                    'eject',
+                    'eject -t',
+                    'xset dpms force off',
+                    'xset dpms force on',
+                    'amixer set Master $(shuf -i 0-100 -n 1)%'
+                ]
+                
+                start_time = time.time()
+                for i in range(duration):
+                    if time.time() - start_time >= duration:
+                        break
+                    cmd = random.choice(commands)
+                    pranks.client.execute_command(cmd)
+                    time.sleep(random.uniform(1, 3))
+                
+                print("✓ Хаос завершен!")
+                input("\nНажми Enter...")
             elif choice == '0':
                 break
+            else:
+                print("Неверный выбор!")
+                input("\nНажми Enter...")
     
     def ssh_flood(self):
         """Заливка экрана через SSH"""
@@ -838,7 +990,7 @@ root.mainloop()
             input("\nНажми Enter...")
     
     def ssh_show_ascii_art(self, pranks, filename):
-        """Показать ASCII-арт на удаленной машине в GUI окне по центру"""
+        """Показать ASCII-арт на удаленной машине в GUI окне по центру без обрезания"""
         try:
             art_path = Path(__file__).parent / filename
             with open(art_path, 'r', encoding='utf-8') as f:
@@ -855,7 +1007,7 @@ root.mainloop()
                 color = 'white'
                 bg_color = 'black'
             
-            # Создаем скрипт для показа ASCII-арт в GUI окне по центру
+            # Создаем скрипт для показа ASCII-арт в GUI окне по центру без обрезания
             script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
@@ -866,26 +1018,25 @@ root.title("ASCII Art")
 root.attributes('-fullscreen', True)
 root.configure(bg='{bg_color}')
 
-# Создаем Canvas для центрирования
-canvas = tk.Canvas(root, bg='{bg_color}', highlightthickness=0)
-canvas.pack(fill='both', expand=True)
+# Создаем Frame для контента
+frame = tk.Frame(root, bg='{bg_color}')
+frame.pack(expand=True)
 
-def show_centered_art():
-    # Очищаем canvas
-    canvas.delete('all')
-    
-    # Получаем размеры окна
-    width = root.winfo_width()
-    height = root.winfo_height()
-    
-    # Отображаем арт по центру
-    text_widget = tk.Text(canvas, bg='{bg_color}', fg='{color}', font=('Courier', 10), wrap='none')
-    text_widget.insert('1.0', """{art}""")
-    text_widget.config(state='disabled')
-    text_window = canvas.create_window(width//2, height//2, anchor='center', window=text_widget)
+# Создаем Text widget с прокруткой для большого арта
+text_widget = tk.Text(frame, bg='{bg_color}', fg='{color}', font=('Courier', 10), wrap='none', relief='flat')
+text_widget.insert('1.0', """{art}""")
+text_widget.config(state='disabled')
 
-# Ждем немного и показываем арт по центру
-root.after(100, show_centered_art)
+# Создаем scrollbar если нужно
+scrollbar = tk.Scrollbar(frame, orient='vertical', command=text_widget.yview, bg='{bg_color}')
+text_widget.configure(yscrollcommand=scrollbar.set)
+
+# Упаковываем
+text_widget.pack(side='left', fill='both', expand=True)
+scrollbar.pack(side='right', fill='y')
+
+# Центрируем в окне
+frame.place(relx=0.5, rely=0.5, anchor='center')
 
 def close(event=None):
     root.destroy()
