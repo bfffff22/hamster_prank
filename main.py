@@ -990,7 +990,7 @@ root.mainloop()
             input("\nНажми Enter...")
     
     def ssh_show_ascii_art(self, pranks, filename):
-        """Показать ASCII-арт на удаленной машине в GUI окне по центру без обрезания"""
+        """Показать ASCII-арт на удаленной машине в GUI окне без обрезания"""
         try:
             art_path = Path(__file__).parent / filename
             with open(art_path, 'r', encoding='utf-8') as f:
@@ -1007,36 +1007,62 @@ root.mainloop()
                 color = 'white'
                 bg_color = 'black'
             
-            # Создаем скрипт для показа ASCII-арт в GUI окне по центру без обрезания
+            # Создаем скрипт для показа ASCII-арт в полноэкранном GUI окне без обрезания
             script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import tkinter.font as tkFont
+
+# Рассчитываем размер шрифта в зависимости от размера арта
+def calculate_font_size(art_lines):
+    height_chars = len(art_lines)
+    width_chars = max([len(line) for line in art_lines]) if art_lines else 80
+    
+    # Определяем размеры экрана
+    root = tk.Tk()
+    root.withdraw()
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    root.destroy()
+    
+    # Рассчитываем размер шрифта чтобы всё поместилось
+    font_w = screen_width // width_chars if width_chars > 0 else 10
+    font_h = screen_height // height_chars if height_chars > 0 else 20
+    
+    font_size = min(font_w, font_h, 20)  # максимум 20, минимум расчёт
+    return max(font_size, 6)  # минимум 6
 
 root = tk.Tk()
 root.title("ASCII Art")
 root.attributes('-fullscreen', True)
 root.configure(bg='{bg_color}')
 
-# Создаем Frame для контента
-frame = tk.Frame(root, bg='{bg_color}')
-frame.pack(expand=True)
+# Разбиваем арт на строки и рассчитываем размер шрифта
+art_lines = """{art}""".splitlines()
+font_size = calculate_font_size(art_lines)
 
-# Создаем Text widget с прокруткой для большого арта
-text_widget = tk.Text(frame, bg='{bg_color}', fg='{color}', font=('Courier', 10), wrap='none', relief='flat')
-text_widget.insert('1.0', """{art}""")
-text_widget.config(state='disabled')
+# Создаем Canvas для отображения текста
+canvas = tk.Canvas(root, bg='{bg_color}', highlightthickness=0)
+canvas.pack(fill='both', expand=True)
 
-# Создаем scrollbar если нужно
-scrollbar = tk.Scrollbar(frame, orient='vertical', command=text_widget.yview, bg='{bg_color}')
-text_widget.configure(yscrollcommand=scrollbar.set)
+# Сначала нужно дождаться полной инициализации окна
+def render_art():
+    # Получаем размеры окна
+    canvas_width = root.winfo_width()
+    canvas_height = root.winfo_height()
+    
+    # Создаем шрифт
+    font = tkFont.Font(family='Courier', size=font_size)
+    
+    # Отображаем каждую строку арта
+    y_offset = canvas_height // 2 - (len(art_lines) * font.metrics('linespace')) // 2
+    
+    for i, line in enumerate(art_lines):
+        y_pos = y_offset + i * font.metrics('linespace')
+        canvas.create_text(canvas_width // 2, y_pos, text=line, fill='{color}', font=font, anchor='center')
 
-# Упаковываем
-text_widget.pack(side='left', fill='both', expand=True)
-scrollbar.pack(side='right', fill='y')
-
-# Центрируем в окне
-frame.place(relx=0.5, rely=0.5, anchor='center')
+# Ждем полной инициализации окна и отрисовываем арт
+root.after(100, render_art)
 
 def close(event=None):
     root.destroy()
@@ -1064,7 +1090,7 @@ root.mainloop()
                 pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
                 time.sleep(1)
                 pranks.client.execute_command(f"rm {remote_path}")
-                print("✓ ASCII-арт показан по центру на удаленке!")
+                print("✓ ASCII-арт показан полностью на удаленке!")
             else:
                 print(f"Ошибка: {msg}")
             
