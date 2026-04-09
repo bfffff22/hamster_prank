@@ -357,12 +357,100 @@ class HamsterPrank:
                 duration = input("Длительность (сек, по умолчанию 5): ").strip()
                 duration = int(duration) if duration.isdigit() else 5
                 print("\nЗапускаю отображение картинки на удаленке...")
-                # Используем команду для загрузки и показа картинки
-                cmd = f'wget "{image_url}" -O /tmp/temp_img && DISPLAY=:0 feh -F /tmp/temp_img &'
-                pranks.client.execute_command(cmd)
-                time.sleep(duration)
-                pranks.client.execute_command('killall feh 2>/dev/null')
-                print("✓ Картинка показана!")
+                
+                # Создаем скрипт для показа изображения
+                script = f'''#!/usr/bin/env python3
+import tkinter as tk
+from PIL import Image, ImageTk
+import requests
+from io import BytesIO
+import tempfile
+import os
+
+root = tk.Tk()
+root.title("Полноэкранная картинка")
+root.attributes('-fullscreen', True)
+root.configure(bg='black')
+
+try:
+    # Загружаем изображение по URL
+    response = requests.get("{image_url}")
+    response.raise_for_status()
+    
+    # Открываем изображение
+    img_data = Image.open(BytesIO(response.content))
+    
+    # Изменяем размер чтобы поместить в экран
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    
+    img_width, img_height = img_data.size
+    ratio = min(screen_width/img_width, screen_height/img_height)
+    new_width = int(img_width * ratio)
+    new_height = int(img_height * ratio)
+    
+    img_resized = img_data.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    
+    # Конвертируем в PhotoImage
+    photo = ImageTk.PhotoImage(img_resized)
+    
+    # Создаем Label для отображения
+    label = tk.Label(root, image=photo, bg='black')
+    label.pack(expand=True)
+    
+    # Сохраняем ссылку на фото
+    label.image = photo
+
+except Exception as e:
+    # Если ошибка загрузки, показываем сообщение
+    error_label = tk.Label(root, text=f'Ошибка загрузки изображения:\\n{{e}}', 
+                          bg='black', fg='red', font=('Courier', 16))
+    error_label.pack(expand=True)
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.bind('Q', close)
+root.after({duration}000, close)
+root.mainloop()
+'''
+                
+                # Загружаем и запускаем на удаленке
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                    f.write(script)
+                    local_path = f.name
+                
+                remote_path = f"~/.image_viewer.py"
+                success, msg = pranks.client.upload_file(local_path, remote_path)
+                
+                if success:
+                    print("Загружаю и показываю картинку...")
+                    # Проверяем, установлен ли PIL
+                    check_pil = 'python3 -c "from PIL import Image, ImageTk; print(True)" 2>/dev/null && echo "PIL_OK" || echo "PIL_MISSING"'
+                    pil_check_success, pil_result = pranks.client.execute_command(check_pil)
+                    
+                    if "PIL_OK" in pil_result:
+                        # PIL установлен, запускаем основной скрипт
+                        pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
+                        time.sleep(0.5)
+                        pranks.client.execute_command(f"rm {remote_path}")
+                        print("✓ Картинка показана!")
+                    else:
+                        # PIL не установлен, пытаемся установить
+                        print("Устанавливаю PIL на удаленной машине...")
+                        pranks.client.execute_command("pip3 install Pillow >/dev/null 2>&1 || apt-get install -y python3-pil >/dev/null 2>&1")
+                        pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
+                        time.sleep(0.5)
+                        pranks.client.execute_command(f"rm {remote_path}")
+                        print("✓ Картинка показана!")
+                else:
+                    print(f"✗ Ошибка: {msg}")
+                
+                import os
+                os.unlink(local_path)
                 input("\nНажми Enter...")
             elif choice == '5':
                 text = input("Текст для окна: ").strip()
