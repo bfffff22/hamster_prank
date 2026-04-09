@@ -1,0 +1,31 @@
+{
+  "ssh_hosts": [
+    {
+      "host": "91.232.202.131",
+      "user": "k1laure"
+    },
+    {
+      "host": "26.160.211.69",
+      "user": "k1laure"
+    },
+    {
+      "host": "192.168.0.130",
+      "user": "kali"
+    }
+  ],
+  "last_mode": null,
+  "settings": {
+    "auto_save_hosts": true,
+    "default_ssh_port": 22,
+    "prank_duration": 10,
+    "animation_speed": "fast"
+  },
+  "favorites": {
+    "pranks": [],
+    "commands": []
+  },
+  "history": {
+    "last_used": null,
+    "commands": []
+  }
+}
