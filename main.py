@@ -506,46 +506,10 @@ root.after(5000, close)
 root.mainloop()
 '''
                 elif choice == '3':  # Волна
-                    script = f'''#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import tkinter as tk
-import math
-import time
-
-root = tk.Tk()
-root.title("Волна")
-root.attributes('-fullscreen', True)
-root.configure(bg='black')
-
-canvas = tk.Canvas(root, bg='black', highlightthickness=0)
-canvas.pack(fill='both', expand=True)
-
-width, height = root.winfo_width(), root.winfo_height()
-chars = list('{text}')
-char_count = len(chars)
-
-def animate_wave():
-    canvas.delete('all')
-    center_y = height // 2
-    amp = 50
-    freq = 0.1
-    
-    for i, char in enumerate(chars):
-        x = (width // char_count) * i + 50
-        y = center_y + amp * math.sin(time.time() * 5 + i * freq)
-        canvas.create_text(x, y, text=char, fill='cyan', font=('Courier', 20))
-
-root.after(50, lambda: animate_wave())
-root.update()
-
-def close(event=None):
-    root.destroy()
-
-root.bind('<Escape>', close)
-root.bind('q', close)
-root.after(5000, close)
-root.mainloop()
-'''
+                    print(f"Запускаю волну на удаленке...")
+                    pranks.wave_text(text)
+                    input("\nНажми Enter...")
+                    continue  # пропускаем общий код загрузки скрипта
                 elif choice == '4':  # Печатная машинка
                     script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
@@ -580,36 +544,10 @@ root.after(5000, close)
 root.mainloop()
 '''
                 elif choice == '5':  # Радужный текст
-                    script = f'''#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import tkinter as tk
-import tkinter.font as tkFont
-
-root = tk.Tk()
-root.title("Радужный текст")
-root.attributes('-fullscreen', True)
-root.configure(bg='black')
-
-colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3']
-text = '{text}'
-text_length = len(text)
-
-canvas = tk.Canvas(root, bg='black', highlightthickness=0)
-canvas.pack(fill='both', expand=True)
-
-for i, char in enumerate(text):
-    color = colors[i % len(colors)]
-    x = 50 + i * 30
-    canvas.create_text(x, height//2, text=char, fill=color, font=('Courier', 24))
-
-def close(event=None):
-    root.destroy()
-
-root.bind('<Escape>', close)
-root.bind('q', close)
-root.after(5000, close)
-root.mainloop()
-'''
+                    print(f"Запускаю радугу на удаленке...")
+                    pranks.rainbow_text(text)
+                    input("\nНажми Enter...")
+                    continue  # пропускаем общий код загрузки скрипта
                 elif choice == '6':  # Приближение
                     script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
@@ -1040,10 +978,10 @@ def render_art():
     screen_height = root.winfo_screenheight()
     
     font_w = screen_width // width_chars if width_chars > 0 else 10
-    font_h = screen_height // height_chars if height_chars > 0 else 15  # уменьшил с 20 до 15
+    font_h = screen_height // (height_chars * 2) if height_chars > 0 else 10  # уменьшил в 2 раза
     
-    font_size = min(font_w, font_h, 15)  # уменьшил с 20 до 15
-    font_size = max(font_size, 6)  # минимум 6
+    font_size = min(font_w, font_h, 10)  # уменьшил до 10
+    font_size = max(font_size, 5)  # минимум 5
     
     # Создаем шрифт
     font = tkFont.Font(family='Courier', size=font_size)
