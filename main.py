@@ -979,17 +979,7 @@ root.mainloop()
     def show_ascii_art(self, filename):
         """Показать ASCII-арт локально"""
         try:
-            # Используем уменьшенные версии артов если оригиналы слишком большие
-            original_path = Path(__file__).parent / filename
-            small_filename = filename.replace('.txt', '_small.txt')
-            small_path = Path(__file__).parent / small_filename
-            
-            if small_path.exists():
-                art_path = small_path
-                print(f"Использую уменьшенную версию {small_filename}...\n")
-            else:
-                art_path = original_path
-            
+            art_path = Path(__file__).parent / filename
             with open(art_path, 'r', encoding='utf-8') as f:
                 art = f.read()
             self.clear_screen()
@@ -1002,17 +992,7 @@ root.mainloop()
     def ssh_show_ascii_art(self, pranks, filename):
         """Показать ASCII-арт на удаленной машине в GUI окне без обрезания"""
         try:
-            # Используем уменьшенные версии артов если оригиналы слишком большие
-            original_path = Path(__file__).parent / filename
-            small_filename = filename.replace('.txt', '_small.txt')
-            small_path = Path(__file__).parent / small_filename
-            
-            if small_path.exists():
-                art_path = small_path
-                print(f"Использую уменьшенную версию {small_filename}...")
-            else:
-                art_path = original_path
-            
+            art_path = Path(__file__).parent / filename
             with open(art_path, 'r', encoding='utf-8') as f:
                 art = f.read()
             
@@ -1055,25 +1035,28 @@ def render_art():
     height_chars = len(art_lines)
     width_chars = max([len(line) for line in art_lines]) if art_lines else 80
     
-    # Определяем размер шрифта
+    # Уменьшаем шрифт, чтобы всё поместилось
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     
     font_w = screen_width // width_chars if width_chars > 0 else 10
-    font_h = screen_height // height_chars if height_chars > 0 else 20
+    font_h = screen_height // height_chars if height_chars > 0 else 15  # уменьшил с 20 до 15
     
-    font_size = min(font_w, font_h, 20)  # максимум 20
-    font_size = max(font_size, 8)  # минимум 8 для читаемости
+    font_size = min(font_w, font_h, 15)  # уменьшил с 20 до 15
+    font_size = max(font_size, 6)  # минимум 6
     
     # Создаем шрифт
     font = tkFont.Font(family='Courier', size=font_size)
     
-    # Отображаем каждую строку арта
-    y_offset = canvas_height // 2 - (len(art_lines) * font.metrics('linespace')) // 2
-    
+    # Отображаем каждую строку арта с прокруткой если нужно
     for i, line in enumerate(art_lines):
-        y_pos = y_offset + i * font.metrics('linespace')
-        canvas.create_text(canvas_width // 2, y_pos, text=line, fill='{color}', font=font, anchor='center')
+        # Рассчитываем позицию чтобы текст был по центру
+        text_height = len(art_lines) * font.metrics('linespace')
+        start_y = (canvas_height - text_height) // 2 if text_height < canvas_height else 10
+        
+        y_pos = start_y + i * font.metrics('linespace')
+        if y_pos < canvas_height:  # только видимые строки
+            canvas.create_text(canvas_width // 2, y_pos, text=line, fill='{color}', font=font, anchor='center')
 
 root.after(100, render_art)
 
@@ -1103,7 +1086,7 @@ root.mainloop()
                 pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
                 time.sleep(1)
                 pranks.client.execute_command(f"rm {remote_path}")
-                print("✓ ASCII-арт показан полностью на удаленке!")
+                print("✓ ASCII-арт показан на удаленке!")
             else:
                 print(f"Ошибка: {msg}")
             
