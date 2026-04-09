@@ -539,24 +539,50 @@ class HamsterPrank:
             input("\nНажми Enter...")
     
     def ssh_show_ascii_art(self, pranks, filename):
-        """Показать ASCII-арт на удаленной машине"""
+        """Показать ASCII-арт на удаленной машине в GUI окне"""
         try:
             art_path = Path(__file__).parent / filename
             with open(art_path, 'r', encoding='utf-8') as f:
                 art = f.read()
             
-            # Создаем скрипт для показа ASCII-арт
+            # Определяем цвет в зависимости от файла
+            if 'skull' in filename.lower():
+                color = 'white'
+                bg_color = 'black'
+            elif 'anime' in filename.lower():
+                color = 'orange'
+                bg_color = 'black'
+            else:
+                color = 'white'
+                bg_color = 'black'
+            
+            # Создаем скрипт для показа ASCII-арт в GUI окне
             script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import tkinter as tk
 import sys
-import time
 
-art = """
-{art}
-"""
+art = """{art}"""
 
-print(art)
-time.sleep(5)
+root = tk.Tk()
+root.title("ASCII Art")
+root.attributes('-fullscreen', True)
+root.configure(bg='{bg_color}')
+
+text = tk.Text(root, bg='{bg_color}', fg='{color}', font=('Courier', 10), wrap='none')
+text.pack(fill='both', expand=True)
+text.insert('1.0', art)
+text.config(state='disabled')
+
+def close(event=None):
+    root.destroy()
+
+root.bind('<Escape>', close)
+root.bind('q', close)
+root.bind('Q', close)
+
+root.after(5000, close)
+root.mainloop()
 '''
             
             # Загружаем и запускаем на удаленке
@@ -570,9 +596,12 @@ time.sleep(5)
             success, msg = pranks.client.upload_file(local_path, remote_path)
             
             if success:
-                print("Показываю ASCII-арт на удаленке...")
-                pranks.client.execute_command(f"python3 {remote_path}")
+                print("Показываю ASCII-арт в полноэкранном окне на удаленке...")
+                # Запускаем в фоне с DISPLAY
+                pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
+                time.sleep(1)
                 pranks.client.execute_command(f"rm {remote_path}")
+                print("✓ ASCII-арт показан на удаленке!")
             else:
                 print(f"Ошибка: {msg}")
             
