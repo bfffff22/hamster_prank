@@ -1,0 +1,37 @@
+REM Hamster Prank - Ultra Slow Universal Rucky Payload
+REM Максимально медленный и надежный запуск для 100% работоспособности
+REM Поддерживает разные пути установки
+
+DELAY 2000
+
+REM Открыть Run dialog (Win + R)
+GUI r
+DELAY 1000
+
+REM Проверить наличие python в системе
+STRING powershell
+DELAY 500
+ENTER
+DELAY 1500
+
+REM Команда для поиска и запуска Hamster Prank
+STRING $paths = @("D:\Всякое\hamster_prank", "$env:USERPROFILE\hamster_prank", "C:\hamster_prank", "$env:PUBLIC\hamster_prank"); foreach($path in $paths) { if(Test-Path $path) { Set-Location $path; python main.py; break; } }
+DELAY 500
+ENTER
+DELAY 2000
+
+REM Альтернативный метод: создание bat файла и его запуск
+REM STRING New-Item -ItemType File -Path ".\temp_run.bat" -Value "@echo off`ncd /d D:\Всякое\hamster_prank`npython main.py`ndel `%0`"" -Force
+REM DELAY 500
+REM ENTER
+REM DELAY 1000
+REM STRING start temp_run.bat
+REM DELAY 100
+REM ENTER
+
+DELAY 3000
+
+REM Закрыть powershell если нужно
+REM STRING exit
+REM DELAY 200
+REM ENTER

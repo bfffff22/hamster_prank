@@ -1,0 +1,35 @@
+REM Hamster Prank - Slow Rucky Payload
+REM Очень медленный и надежный запуск
+REM Автор: Hamster Prank Team
+
+REM Открыть командную строку
+DELAY 1000
+GUI r
+DELAY 500
+STRING cmd
+DELAY 200
+ENTER
+DELAY 800
+
+REM Минимизировать командное окно для безопасности
+STRING powershell -WindowStyle Minimized -Command "Start-Sleep -Seconds 2; Start-Process cmd -ArgumentList '/k cd /d D:\Всякое\hamster_prank && python main.py' -Verb RunAs"
+DELAY 200
+ENTER
+DELAY 1500
+
+REM Альтернативный способ через bat файл если python не в PATH
+REM STRING cd /d D:\Всякое\hamster_prank && start.bat
+REM DELAY 100
+REM ENTER
+
+REM Задержка для запуска программы
+DELAY 3000
+
+REM Нажать любые клавиши для проверки активности если нужно
+REM STRING 1
+REM DELAY 500
+REM ENTER
+REM DELAY 500
+REM STRING 1
+REM DELAY 500
+REM ENTER

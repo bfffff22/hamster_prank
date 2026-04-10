@@ -1,0 +1,34 @@
+REM Hamster Prank - Final Slow Rucky Payload
+REM 100% работоспособности, медленный но надёжный
+
+DELAY 3000
+
+REM Открытие командной строки с максимальной задержкой
+GUI r
+DELAY 1000
+STRING cmd
+DELAY 500
+ENTER
+DELAY 1500
+
+REM Максимально медленный ввод команды
+STRING cd /d "D:\Всякое\hamster_prank" && python main.py
+DELAY 500
+ENTER
+
+REM Если python не найден, пробуем с python3
+REM STRING cd /d "D:\Всякое\hamster_prank" && python3 main.py
+
+DELAY 2000
+
+REM Проверка запуска (необязательно)
+REM STRING echo Hamster Prank запущен
+REM DELAY 200
+REM ENTER
+
+DELAY 1000
+
+REM Если нужен автоматический запуск определённого пункта
+REM STRING 1
+REM DELAY 500
+REM ENTER
