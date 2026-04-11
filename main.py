@@ -434,7 +434,7 @@ class HamsterPrank:
             print("\n✗ tkinter не обнаружен на удаленной машине!")
             print("\nВыберите действие:")
             print("1. Установить tkinter на удаленной машине")
-            print("2. Запустить альтернативный вариант (без GUI)")
+            print("2. Запустить HTML версию (в браузере)")
             print("0. Отмена")
             print()
             
@@ -453,12 +453,8 @@ class HamsterPrank:
                     input("\nНажми Enter...")
                     return
             elif choice == '2':
-                print("\nЗапускаю альтернативный вариант...")
-                # Запускаем консольную версию
-                if prank_type == 'fullscreen':
-                    self.ssh_console_pranks(pranks)
-                elif prank_type == 'window_control':
-                    self.ssh_console_pranks(pranks)
+                print("\nЗапускаю HTML версию в браузере на удаленке...")
+                self._ssh_launch_html_prank(pranks, prank_type)
                 return
             else:
                 return
@@ -468,6 +464,88 @@ class HamsterPrank:
             self.ssh_fullscreen_pranks(pranks)
         elif prank_type == 'window_control':
             self.ssh_window_control(pranks)
+    
+    def _ssh_launch_html_prank(self, pranks, prank_type):
+        """Запустить HTML пранк на удаленной машине"""
+        if prank_type == 'fullscreen':
+            self.ssh_fullscreen_pranks_html(pranks)
+        elif prank_type == 'window_control':
+            print("HTML версия для управления окнами пока не реализована")
+            input("\nНажми Enter...")
+    
+    def ssh_fullscreen_pranks_html(self, pranks):
+        """Полноэкранные HTML пранки через SSH"""
+        from core.html_pranks import generate_matrix_html, generate_flood_html, generate_glitch_html, generate_chinese_attack_html
+        
+        while True:
+            self.clear_screen()
+            print("=== ПОЛНОЭКРАННЫЕ HTML ПРАНКИ (SSH) ===\n")
+            print("1. Матрица")
+            print("2. Заливка")
+            print("3. Глитч")
+            print("4. Китайская атака")
+            print("0. Назад")
+            print()
+            
+            choice = input("Выбери: ").strip()
+            
+            if choice == '0':
+                break
+            
+            duration = input("Длительность (сек, по умолчанию 15): ").strip()
+            duration = int(duration) if duration.isdigit() else 15
+            
+            html_content = None
+            prank_name = ""
+            
+            if choice == '1':
+                html_content = generate_matrix_html(duration)
+                prank_name = "matrix"
+            elif choice == '2':
+                html_content = generate_flood_html(duration)
+                prank_name = "flood"
+            elif choice == '3':
+                html_content = generate_glitch_html(duration)
+                prank_name = "glitch"
+            elif choice == '4':
+                html_content = generate_chinese_attack_html(duration)
+                prank_name = "chinese"
+            else:
+                continue
+            
+            if html_content:
+                print(f"\nЗапускаю {prank_name} в браузере на удаленке...")
+                
+                # Создаем временный HTML файл
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                    f.write(html_content)
+                    local_path = f.name
+                
+                # Загружаем на удаленку
+                remote_path = f"/tmp/.prank_{prank_name}.html"
+                success, msg = pranks.client.upload_file(local_path, remote_path)
+                
+                if success:
+                    # Открываем в браузере в полноэкранном режиме
+                    pranks.client.execute_command(f"DISPLAY=:0 firefox --kiosk file://{remote_path} 2>&1 || DISPLAY=:0 chromium --kiosk file://{remote_path} 2>&1 || DISPLAY=:0 xdg-open file://{remote_path} 2>&1 &")
+                    
+                    time.sleep(2)
+                    
+                    # Проверяем что браузер запустился
+                    ps_success, ps_out = pranks.client.execute_command("ps aux | grep -E 'firefox|chromium' | grep -v grep")
+                    if ps_out.strip():
+                        print(f"✓ Браузер запущен, {prank_name} показан!")
+                        print(f"Пранк закроется автоматически через {duration} секунд")
+                    else:
+                        print("⚠ Браузер не найден")
+                        print("Установите firefox или chromium на удаленной машине")
+                else:
+                    print(f"✗ Ошибка загрузки: {msg}")
+                
+                import os
+                os.unlink(local_path)
+                input("\nНажми Enter...")
     
     def ssh_console_pranks(self, pranks):
         """Подменю консольных пранков через SSH"""
