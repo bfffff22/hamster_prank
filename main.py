@@ -1572,21 +1572,21 @@ root.mainloop()
             
             remote_path = f"~/.ascii_art.py"
             print(f"Загружаю {filename} на удаленку...")
-                success, msg = pranks.client.upload_file(local_path, remote_path)
+            success, msg = pranks.client.upload_file(local_path, remote_path)
+            
+            if success:
+                print("Проверяю X11 доступ...")
+                # Настраиваем X11 permissions
+                pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || xhost +SI:localuser=$(whoami) 2>/dev/null || true")
                 
-                if success:
-                    print("Проверяю X11 доступ...")
-                    # Настраиваем X11 permissions
-                    pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || xhost +SI:localuser=$(whoami) 2>/dev/null || true")
-                    
-                    print("Показываю ASCII-арт в полноэкранном окне на удаленке...")
-                    # Запускаем в фоне с DISPLAY
-                    pranks.client.execute_command(f"DISPLAY=:0 timeout 10 python3 {remote_path} >/dev/null 2>&1 &")
-                    time.sleep(2)  # Увеличиваем задержку
-                    pranks.client.execute_command(f"rm {remote_path}")
-                    print("✓ ASCII-арт показан на удаленке!")
-                else:
-                    print(f"Ошибка: {msg}")
+                print("Показываю ASCII-арт в полноэкранном окне на удаленке...")
+                # Запускаем в фоне с DISPLAY
+                pranks.client.execute_command(f"DISPLAY=:0 timeout 10 python3 {remote_path} >/dev/null 2>&1 &")
+                time.sleep(2)  # Увеличиваем задержку
+                pranks.client.execute_command(f"rm {remote_path}")
+                print("✓ ASCII-арт показан на удаленке!")
+            else:
+                print(f"Ошибка: {msg}")
             
             import os
             os.unlink(local_path)
