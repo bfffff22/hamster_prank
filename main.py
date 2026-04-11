@@ -192,97 +192,75 @@ class HamsterPrank:
     
     def _launch_html_prank(self, prank_type):
         """Запустить HTML версию пранка"""
+        from core.html_pranks import (generate_matrix_html, generate_flood_html, 
+                                       generate_glitch_html, generate_chinese_attack_html,
+                                       generate_wave_text_html, generate_rainbow_text_html)
+        
         if prank_type == 'fullscreen':
-            # Создаем HTML файл с полноэкранным эффектом
-            html_content = '''<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Prank</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: black;
-            font-family: monospace;
-        }
-        #canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="canvas"></canvas>
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        // Матрица эффект
-        const chars = '01';
-        const fontSize = 16;
-        const columns = canvas.width / fontSize;
-        const drops = Array(Math.floor(columns)).fill(1);
-        
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            # Меню выбора HTML пранка
+            self.clear_screen()
+            print("=== HTML ПРАНКИ (БЕЗ ЗАВИСИМОСТЕЙ) ===\n")
+            print("1. Матрица")
+            print("2. Заливка")
+            print("3. Глитч")
+            print("4. Китайская атака")
+            print("5. Волна текста")
+            print("6. Радужный текст")
+            print("0. Отмена")
+            print()
             
-            ctx.fillStyle = '#0F0';
-            ctx.font = fontSize + 'px monospace';
+            choice = input("Выбери: ").strip()
             
-            for (let i = 0; i < drops.length; i++) {
-                const text = chars[Math.floor(Math.random() * chars.length)];
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if choice == '0':
+                return
+            
+            duration = 15
+            html_content = None
+            
+            if choice == '1':
+                duration = int(input("Длительность (сек, 15): ").strip() or "15")
+                html_content = generate_matrix_html(duration)
+            elif choice == '2':
+                duration = int(input("Длительность (сек, 10): ").strip() or "10")
+                html_content = generate_flood_html(duration)
+            elif choice == '3':
+                duration = int(input("Длительность (сек, 10): ").strip() or "10")
+                html_content = generate_glitch_html(duration)
+            elif choice == '4':
+                duration = int(input("Длительность (сек, 15): ").strip() or "15")
+                html_content = generate_chinese_attack_html(duration)
+            elif choice == '5':
+                text = input("Текст: ").strip() or "ПРАНК!"
+                duration = int(input("Длительность (сек, 5): ").strip() or "5")
+                html_content = generate_wave_text_html(text, duration)
+            elif choice == '6':
+                text = input("Текст: ").strip() or "ПРАНК!"
+                duration = int(input("Длительность (сек, 5): ").strip() or "5")
+                html_content = generate_rainbow_text_html(text, duration)
+            else:
+                return
+            
+            if html_content:
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                    f.write(html_content)
+                    html_path = f.name
                 
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-        }
-        
-        setInterval(draw, 33);
-        
-        // Закрыть через 15 секунд
-        setTimeout(() => window.close(), 15000);
-        
-        // Закрыть по Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') window.close();
-        });
-        
-        // Открыть в полноэкранном режиме
-        document.documentElement.requestFullscreen().catch(() => {});
-    </script>
-</body>
-</html>'''
-            
-            import tempfile
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
-                f.write(html_content)
-                html_path = f.name
-            
-            # Открываем в браузере
-            import webbrowser
-            webbrowser.open('file://' + html_path)
-            
-            print("✓ HTML пранк запущен в браузере!")
-            print("Нажмите Escape в браузере для закрытия")
-            input("\nНажми Enter...")
-            
-            # Удаляем временный файл
-            import os
-            try:
-                os.unlink(html_path)
-            except:
-                pass
+                # Открываем в браузере
+                import webbrowser
+                webbrowser.open('file://' + html_path)
+                
+                print("\n✓ HTML пранк запущен в браузере!")
+                print(f"Закроется автоматически через {duration} секунд")
+                print("Или нажмите Escape в браузере для закрытия")
+                input("\nНажми Enter...")
+                
+                # Удаляем временный файл
+                import os
+                try:
+                    os.unlink(html_path)
+                except:
+                    pass
         
         elif prank_type == 'window_chaos':
             print("HTML версия для управления окнами пока не реализована")
