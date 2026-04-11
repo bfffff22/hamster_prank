@@ -524,7 +524,8 @@ class HamsterPrank:
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
                     print("\nБлокирую экран на удаленке...")
-                # Попробовать разные способы блокировки экрана
+                print("\nБлокирую экран на удаленке...")
+                # Сначала пробуем стандартные команды
                 lock_commands = [
                     'gnome-screensaver-command --lock',
                     'xscreensaver-command -lock', 
@@ -536,10 +537,67 @@ class HamsterPrank:
                 
                 success = False
                 for cmd in lock_commands:
-                    cmd_result, output = pranks.client.execute_command(f'{cmd} 2>&1')
-                    if cmd_result:
+                    cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1 || true')
+                    if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower():
                         success = True
                         break
+                
+                if not success:
+                    # Если стандартные команды не работают, пробуем через Python GUI
+                    script = '''#!/usr/bin/env python3
+import tkinter as tk
+import time
+import os
+
+# Устанавливаем DISPLAY
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
+
+# Создаем полноэкранное окно блокировки
+root = tk.Tk()
+root.title("System Lock")
+root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
+root.configure(bg='black')
+
+# Создаем надпись "Экран заблокирован"
+label = tk.Label(root, text="SCREEN LOCKED", 
+                font=('Arial', 60, 'bold'),
+                fg='red', bg='black')
+label.pack(expand=True)
+
+# Привязываем клавиши для срабатывания (любая клавиша может быть использована для проверки)
+def unlock_attempt(event):
+    # В реальном случае, разблокировка требует аутентификации
+    pass
+
+root.bind('<Key>', unlock_attempt)
+root.bind('<Button>', unlock_attempt)
+root.focus_force()
+
+# Пытаемся ограничить управление окном (но не можем полностью его заблокировать без аутентификации)
+root.mainloop()
+'''
+                    
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                        f.write(script)
+                        local_path = f.name
+                    
+                    remote_path = "/tmp/.screen_lock.py"
+                    upload_success, upload_msg = pranks.client.upload_file(local_path, remote_path)
+                    
+                    if upload_success:
+                        # Запускаем скрипт блокировки
+                        pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
+                        pranks.client.execute_command(f"DISPLAY=:0 python3 {remote_path} &")
+                        print("✓ Экран заблокирован (через GUI заглушку)")
+                        success = True
+                    else:
+                        print(f"✗ Не удалось загрузить скрипт: {upload_msg}")
+                    
+                    import os
+                    os.unlink(local_path)
                 
                 print("✓ Экран заблокирован!" if success else "⚠ Блокировка экрана возможна не выполнена")
                 input("\nНажми Enter...")
@@ -1359,7 +1417,8 @@ except:
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
                     print("\nБлокирую экран на удаленке...")
-                    # Попробовать разные способы блокировки экрана
+                    print("\nБлокирую экран на удаленке...")
+                    # Сначала пробуем стандартные команды
                     lock_commands = [
                         'gnome-screensaver-command --lock',
                         'xscreensaver-command -lock', 
@@ -1371,10 +1430,67 @@ except:
                     
                     success = False
                     for cmd in lock_commands:
-                        cmd_result, output = pranks.client.execute_command(f'{cmd} 2>&1')
-                        if cmd_result:
+                        cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1 || true')
+                        if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower():
                             success = True
                             break
+                    
+                    if not success:
+                        # Если стандартные команды не работают, пробуем через Python GUI
+                        script = '''#!/usr/bin/env python3
+import tkinter as tk
+import time
+import os
+
+# Устанавливаем DISPLAY
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
+
+# Создаем полноэкранное окно блокировки
+root = tk.Tk()
+root.title("System Lock")
+root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
+root.configure(bg='black')
+
+# Создаем надпись "Экран заблокирован"
+label = tk.Label(root, text="SCREEN LOCKED", 
+                font=('Arial', 60, 'bold'),
+                fg='red', bg='black')
+label.pack(expand=True)
+
+# Привязываем клавиши для срабатывания (любая клавиша может быть использована для проверки)
+def unlock_attempt(event):
+    # В реальном случае, разблокировка требует аутентификации
+    pass
+
+root.bind('<Key>', unlock_attempt)
+root.bind('<Button>', unlock_attempt)
+root.focus_force()
+
+# Пытаемся ограничить управление окном (но не можем полностью его заблокировать без аутентификации)
+root.mainloop()
+'''
+                        
+                        import tempfile
+                        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                            f.write(script)
+                            local_path = f.name
+                        
+                        remote_path = "/tmp/.screen_lock.py"
+                        upload_success, upload_msg = pranks.client.upload_file(local_path, remote_path)
+                        
+                        if upload_success:
+                            # Запускаем скрипт блокировки
+                            pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
+                            pranks.client.execute_command(f"DISPLAY=:0 python3 {remote_path} &")
+                            print("✓ Экран заблокирован (через GUI заглушку)")
+                            success = True
+                        else:
+                            print(f"✗ Не удалось загрузить скрипт: {upload_msg}")
+                        
+                        import os
+                        os.unlink(local_path)
                     
                     print("✓ Экран заблокирован!" if success else "⚠ Блокировка экрана возможна не выполнена")
                 input("\nНажми Enter...")
