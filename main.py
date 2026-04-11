@@ -36,7 +36,7 @@ class HamsterPrank:
         if self.config_path.exists():
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        return {"ssh_hosts": [], "last_mode": None}
+        return {"last_mode": None}
     
     def save_config(self):
         """Сохранение конфига"""
@@ -93,19 +93,9 @@ class HamsterPrank:
             self.clear_screen()
             print("=== ЛОКАЛЬНЫЕ ОПЕРАЦИИ ===\n")
             print("1. Пранки в консоли (матрица, глитч)")
-            
-            if self.use_gui:
-                print("2. Полноэкранные пранки (GUI окна)")
-            else:
-                print("2. Полноэкранные пранки (GUI окна) [требует tkinter]")
-            
+            print("2. Полноэкранные пранки (GUI окна)")
             print("3. Текстовые эффекты")
-            
-            if self.use_gui:
-                print("4. Управление окнами")
-            else:
-                print("4. Управление окнами [требует tkinter]")
-            
+            print("4. Управление окнами")
             print("5. Запустить программу")
             print("6. Показать Skull (ASCII-арт)")
             print("7. Показать Anime (ASCII-арт)")
@@ -118,24 +108,12 @@ class HamsterPrank:
                 from pranks.screen_flood import interactive_menu
                 interactive_menu()
             elif choice == '2':
-                if not self.use_gui:
-                    from core.tkinter_check import checker
-                    checker.show_unavailable_message()
-                    input("\nНажми Enter...")
-                else:
-                    from pranks.fullscreen_pranks import interactive_menu
-                    interactive_menu()
+                self._launch_prank_with_tkinter_check('fullscreen')
             elif choice == '3':
                 from pranks.text_bomb import interactive_menu
                 interactive_menu()
             elif choice == '4':
-                if not self.use_gui:
-                    from core.tkinter_check import checker
-                    checker.show_unavailable_message()
-                    input("\nНажми Enter...")
-                else:
-                    from pranks.window_chaos import interactive_menu
-                    interactive_menu()
+                self._launch_prank_with_tkinter_check('window_chaos')
             elif choice == '5':
                 cmd = input("Команда для запуска: ")
                 os.system(cmd)
@@ -149,19 +127,63 @@ class HamsterPrank:
             if choice != '0' and choice == '5':
                 input("\nНажми Enter для продолжения...")
     
+    def _launch_prank_with_tkinter_check(self, prank_type):
+        """Запустить пранк с проверкой tkinter"""
+        from core.tkinter_check import checker
+        
+        if not checker.check_local():
+            print("\n✗ tkinter не обнаружен!")
+            print("\nВыберите действие:")
+            print("1. Установить tkinter автоматически")
+            print("2. Запустить альтернативный вариант (без GUI)")
+            print("0. Отмена")
+            print()
+            
+            choice = input("Ваш выбор: ").strip()
+            
+            if choice == '1':
+                print("\nУстанавливаю tkinter...")
+                if IS_LINUX:
+                    os.system("sudo apt-get install -y python3-tk 2>/dev/null || sudo dnf install -y python3-tkinter 2>/dev/null || sudo pacman -S tk 2>/dev/null")
+                else:
+                    print("На Windows переустановите Python с официального сайта с опцией tcl/tk")
+                    input("\nНажми Enter...")
+                    return
+                
+                # Проверяем снова
+                if checker.check_local():
+                    print("✓ tkinter установлен!")
+                    self.use_gui = True
+                else:
+                    print("✗ Не удалось установить tkinter")
+                    input("\nНажми Enter...")
+                    return
+            elif choice == '2':
+                print("\nЗапускаю альтернативный вариант...")
+                # Запускаем консольную версию
+                if prank_type == 'fullscreen':
+                    from pranks.screen_flood import interactive_menu
+                    interactive_menu()
+                elif prank_type == 'window_chaos':
+                    from pranks.screen_flood import interactive_menu
+                    interactive_menu()
+                return
+            else:
+                return
+        
+        # Запускаем GUI версию
+        if prank_type == 'fullscreen':
+            from pranks.fullscreen_pranks import interactive_menu
+            interactive_menu()
+        elif prank_type == 'window_chaos':
+            from pranks.window_chaos import interactive_menu
+            interactive_menu()
+    
     def ssh_menu(self):
         """Меню SSH операций"""
         while True:
             self.clear_screen()
             print("=== SSH ПРАНКИ ===\n")
-            
-            # Показываем сохраненные хосты
-            if self.config['ssh_hosts']:
-                print("Сохраненные хосты:")
-                for i, host in enumerate(self.config['ssh_hosts'][-3:], 1):
-                    print(f"  {i}. {host['user']}@{host['host']}")
-                print()
-            
             print("1. Подключиться и выполнить пранк")
             print("2. Залить экран на удаленке")
             print("3. Показать текст на удаленке")
@@ -193,23 +215,7 @@ class HamsterPrank:
         from core.ssh_client_expect import SSHClientExpect, parse_ssh_string
         
         print("\n=== SSH ПОДКЛЮЧЕНИЕ ===")
-        
-        # Показываем сохраненные
-        if self.config['ssh_hosts']:
-            print("\nСохраненные хосты:")
-            for i, host in enumerate(self.config['ssh_hosts'], 1):
-                print(f"{i}. {host['user']}@{host['host']}")
-            print("0. Ввести новый")
-            
-            choice = input("\nВыбери хост или 0: ").strip()
-            
-            if choice.isdigit() and 0 < int(choice) <= len(self.config['ssh_hosts']):
-                saved = self.config['ssh_hosts'][int(choice) - 1]
-                host_str = f"{saved['user']}@{saved['host']}"
-            else:
-                host_str = input("Хост (user@ip:port): ").strip()
-        else:
-            host_str = input("Хост (user@ip:port): ").strip()
+        host_str = input("Хост (user@ip:port): ").strip()
         
         if not host_str:
             return None
@@ -219,14 +225,6 @@ class HamsterPrank:
         # Запрашиваем пароль
         import getpass
         password = getpass.getpass(f"Пароль для {user}@{host}: ")
-        
-        # Сохраняем в конфиг
-        if host not in [h.get('host') for h in self.config['ssh_hosts']]:
-            self.config['ssh_hosts'].append({
-                'host': host,
-                'user': user
-            })
-            self.save_config()
         
         client = SSHClientExpect(host, port, user, password)
         success, msg = client.connect()
@@ -266,19 +264,9 @@ class HamsterPrank:
             self.clear_screen()
             print("=== SSH ОПЕРАЦИИ (на удаленной машине) ===\n")
             print("1. Пранки в консоли (матрица, глитч)")
-            
-            if remote_has_tkinter:
-                print("2. Полноэкранные пранки (GUI окна)")
-            else:
-                print("2. Полноэкранные пранки (GUI окна) [требует tkinter на удаленке]")
-            
+            print("2. Полноэкранные пранки (GUI окна)")
             print("3. Текстовые эффекты")
-            
-            if remote_has_tkinter:
-                print("4. Управление окнами")
-            else:
-                print("4. Управление окнами [требует tkinter на удаленке]")
-            
+            print("4. Управление окнами")
             print("5. Запустить программу")
             print("6. Показать Skull (ASCII-арт)")
             print("7. Показать Anime (ASCII-арт)")
@@ -290,21 +278,11 @@ class HamsterPrank:
             if choice == '1':
                 self.ssh_console_pranks(pranks)
             elif choice == '2':
-                if not remote_has_tkinter:
-                    print("\n✗ Эта функция требует tkinter на удаленной машине!")
-                    print(checker.get_install_instructions('linux'))
-                    input("\nНажми Enter...")
-                else:
-                    self.ssh_fullscreen_pranks(pranks)
+                self._ssh_launch_prank_with_tkinter_check(pranks, client, 'fullscreen')
             elif choice == '3':
-                self.ssh_text_effects(pranks, remote_has_tkinter)
+                self.ssh_text_effects(pranks, client)
             elif choice == '4':
-                if not remote_has_tkinter:
-                    print("\n✗ Эта функция требует tkinter на удаленной машине!")
-                    print(checker.get_install_instructions('linux'))
-                    input("\nНажми Enter...")
-                else:
-                    self.ssh_window_control(pranks)
+                self._ssh_launch_prank_with_tkinter_check(pranks, client, 'window_control')
             elif choice == '5':
                 cmd = input("Команда для запуска: ")
                 if cmd:
@@ -314,19 +292,57 @@ class HamsterPrank:
                     print(output)
                     input("\nНажми Enter...")
             elif choice == '6':
-                if remote_has_tkinter:
-                    self.ssh_show_ascii_art(pranks, 'skull.txt')
-                else:
-                    # Показываем в консоли
-                    self.ssh_show_ascii_art_console(pranks, 'skull.txt')
+                self.ssh_show_ascii_art(pranks, 'skull.txt')
             elif choice == '7':
-                if remote_has_tkinter:
-                    self.ssh_show_ascii_art(pranks, 'anime.txt')
-                else:
-                    # Показываем в консоли
-                    self.ssh_show_ascii_art_console(pranks, 'anime.txt')
+                self.ssh_show_ascii_art(pranks, 'anime.txt')
             elif choice == '0':
                 break
+    
+    def _ssh_launch_prank_with_tkinter_check(self, pranks, client, prank_type):
+        """Запустить SSH пранк с проверкой tkinter на удаленной машине"""
+        from core.tkinter_check import checker
+        
+        host_key = f"{client.host}:{client.port}"
+        remote_has_tkinter = checker.check_remote(client, host_key)
+        
+        if not remote_has_tkinter:
+            print("\n✗ tkinter не обнаружен на удаленной машине!")
+            print("\nВыберите действие:")
+            print("1. Установить tkinter на удаленной машине")
+            print("2. Запустить альтернативный вариант (без GUI)")
+            print("0. Отмена")
+            print()
+            
+            choice = input("Ваш выбор: ").strip()
+            
+            if choice == '1':
+                print("\nУстанавливаю tkinter на удаленной машине...")
+                pranks.client.execute_command("sudo apt-get install -y python3-tk 2>/dev/null || sudo dnf install -y python3-tkinter 2>/dev/null || sudo pacman -S tk 2>/dev/null")
+                
+                # Проверяем снова
+                checker.remote_available.pop(host_key, None)  # Сбрасываем кеш
+                if checker.check_remote(client, host_key):
+                    print("✓ tkinter установлен на удаленной машине!")
+                else:
+                    print("✗ Не удалось установить tkinter")
+                    input("\nНажми Enter...")
+                    return
+            elif choice == '2':
+                print("\nЗапускаю альтернативный вариант...")
+                # Запускаем консольную версию
+                if prank_type == 'fullscreen':
+                    self.ssh_console_pranks(pranks)
+                elif prank_type == 'window_control':
+                    self.ssh_console_pranks(pranks)
+                return
+            else:
+                return
+        
+        # Запускаем GUI версию
+        if prank_type == 'fullscreen':
+            self.ssh_fullscreen_pranks(pranks)
+        elif prank_type == 'window_control':
+            self.ssh_window_control(pranks)
     
     def ssh_console_pranks(self, pranks):
         """Подменю консольных пранков через SSH"""
@@ -575,37 +591,21 @@ root.mainloop()
             elif choice == '0':
                 break
     
-    def ssh_text_effects(self, pranks, remote_has_tkinter):
+    def ssh_text_effects(self, pranks, client):
         """Подменю текстовых эффектов через SSH"""
+        from core.tkinter_check import checker
+        
         while True:
             self.clear_screen()
             print("=== ТЕКСТОВЫЕ ЭФФЕКТЫ (SSH) ===\n")
-            
-            if remote_has_tkinter:
-                print("1. Текст в рамке (GUI)")
-                print("2. Заполнить экран текстом (GUI)")
-            else:
-                print("1. Текст в рамке (GUI) [требует tkinter]")
-                print("2. Заполнить экран текстом (GUI) [требует tkinter]")
-            
+            print("1. Текст в рамке (GUI)")
+            print("2. Заполнить экран текстом (GUI)")
             print("3. Волна")
-            
-            if remote_has_tkinter:
-                print("4. Печатная машинка (GUI)")
-            else:
-                print("4. Печатная машинка (GUI) [требует tkinter]")
-            
+            print("4. Печатная машинка (GUI)")
             print("5. Радужный текст")
-            
-            if remote_has_tkinter:
-                print("6. Приближение (GUI)")
-                print("7. Тряска (GUI)")
-                print("8. Спам (GUI)")
-            else:
-                print("6. Приближение (GUI) [требует tkinter]")
-                print("7. Тряска (GUI) [требует tkinter]")
-                print("8. Спам (GUI) [требует tkinter]")
-            
+            print("6. Приближение (GUI)")
+            print("7. Тряска (GUI)")
+            print("8. Спам (GUI)")
             print("0. Назад")
             print()
             
@@ -617,12 +617,35 @@ root.mainloop()
                 # Проверяем, требует ли выбранная опция GUI
                 gui_required = choice in ['1', '2', '4', '6', '7', '8']
                 
-                if gui_required and not remote_has_tkinter:
-                    from core.tkinter_check import checker
-                    print("\n✗ Эта функция требует tkinter на удаленной машине!")
-                    print(checker.get_install_instructions('linux'))
-                    input("\nНажми Enter...")
-                    continue
+                if gui_required:
+                    host_key = f"{client.host}:{client.port}"
+                    remote_has_tkinter = checker.check_remote(client, host_key)
+                    
+                    if not remote_has_tkinter:
+                        print("\n✗ tkinter не обнаружен на удаленной машине!")
+                        print("\nВыберите действие:")
+                        print("1. Установить tkinter на удаленной машине")
+                        print("2. Запустить альтернативный вариант (консоль)")
+                        print("0. Отмена")
+                        print()
+                        
+                        action = input("Ваш выбор: ").strip()
+                        
+                        if action == '1':
+                            print("\nУстанавливаю tkinter...")
+                            pranks.client.execute_command("sudo apt-get install -y python3-tk 2>/dev/null || sudo dnf install -y python3-tkinter 2>/dev/null")
+                            checker.remote_available.pop(host_key, None)
+                            
+                            if not checker.check_remote(client, host_key):
+                                print("✗ Не удалось установить tkinter")
+                                input("\nНажми Enter...")
+                                continue
+                            print("✓ tkinter установлен!")
+                        elif action == '2':
+                            # Используем консольные эффекты
+                            choice = '3'  # Волна или радуга
+                        else:
+                            continue
                 
                 text = input("Текст: ").strip()
                 if not text:
@@ -1078,24 +1101,15 @@ root.mainloop()
         while True:
             self.clear_screen()
             print("=== НАСТРОЙКИ ===\n")
-            print(f"Сохраненные SSH хосты: {len(self.config['ssh_hosts'])}")
-            print()
-            print("1. Показать сохраненные хосты")
-            print("2. Очистить историю")
+            print("1. О программе")
             print("0. Назад")
             print()
             
             choice = input("Выбери: ").strip()
             
             if choice == '1':
-                print("\nСохраненные хосты:")
-                for i, host in enumerate(self.config['ssh_hosts'], 1):
-                    print(f"{i}. {host['user']}@{host['host']}")
-                input("\nНажми Enter...")
-            elif choice == '2':
-                self.config['ssh_hosts'] = []
-                self.save_config()
-                print("История очищена!")
+                print("\nHamster Prank - Swiss Army Knife для пранков")
+                print("Версия: 2.0")
                 input("\nНажми Enter...")
             elif choice == '0':
                 break
@@ -1255,12 +1269,21 @@ root.mainloop()
             input("\nНажми Enter...")
 
 if __name__ == "__main__":
+    # Проверяем обновления при запуске
+    try:
+        from core.auto_update import check_and_update
+        if check_and_update():
+            print("\nПрограмма обновлена. Перезапустите её.")
+            sys.exit(0)
+    except Exception as e:
+        print(f"Ошибка проверки обновлений: {e}")
+    
     app = HamsterPrank()
     
     # Проверяем наличие tkinter при запуске
     from core.tkinter_check import checker
     
-    print("Проверка системы...")
+    print("\nПроверка системы...")
     app.tkinter_available = checker.check_local()
     
     if app.tkinter_available:

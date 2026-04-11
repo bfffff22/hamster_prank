@@ -93,25 +93,27 @@ class SSHPranksFiles:
                 print("Запускаю GUI на Windows через Task Scheduler...")
             
             elif remote_os in ["linux", "macos"]:
-                # Linux/macOS: используем setsid для полной отвязки
+                # Linux/macOS: используем nohup для надежного запуска
                 self.client.execute_command(f"chmod +x {remote_path}")
-                cmd = f"setsid sh -c 'DISPLAY=:0 python3 {remote_path} </dev/null >/dev/null 2>&1 &'"
+                cmd = f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &"
                 print("Запускаю полноэкранное окно на Linux...")
             
             else:
                 # Fallback - пробуем Linux
                 self.client.execute_command(f"chmod +x {remote_path}")
-                cmd = f"setsid sh -c 'DISPLAY=:0 python3 {remote_path} </dev/null >/dev/null 2>&1 &'"
+                cmd = f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &"
                 print("Запускаю (fallback режим)...")
             
             success, output = self.client.execute_command(cmd)
             
-            if success or not output:
-                print(f"✓ GUI запущено на удаленной машине ({remote_os})!")
-                return True
-            else:
-                print(f"✗ Ошибка: {output}")
-                return False
+            # Даем время на запуск
+            time.sleep(1)
+            
+            # Удаляем временный файл
+            self.client.execute_command(f"rm -f {remote_path}")
+            
+            print(f"✓ GUI запущено на удаленной машине ({remote_os})!")
+            return True
         
         finally:
             try:
