@@ -93,16 +93,22 @@ class SSHPranksFiles:
                 print("Запускаю GUI на Windows через Task Scheduler...")
             
             elif remote_os in ["linux", "macos"]:
-                # Linux/macOS: используем правильный способ запуска GUI
+                # Linux/macOS: даем права на X11 и запускаем GUI
                 self.client.execute_command(f"chmod +x {remote_path}")
-                # Используем export DISPLAY и запускаем напрямую
-                cmd = f"export DISPLAY=:0 && python3 {remote_path} &"
+                
+                # Даем права на доступ к X11 дисплею
+                print("Настраиваю доступ к X11...")
+                self.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || xhost +SI:localuser:$(whoami) 2>/dev/null || true")
+                
+                # Запускаем с правильными переменными окружения
+                cmd = f"DISPLAY=:0 XAUTHORITY=/home/$(whoami)/.Xauthority python3 {remote_path} &"
                 print("Запускаю полноэкранное окно на Linux...")
             
             else:
                 # Fallback - пробуем Linux
                 self.client.execute_command(f"chmod +x {remote_path}")
-                cmd = f"export DISPLAY=:0 && python3 {remote_path} &"
+                self.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
+                cmd = f"DISPLAY=:0 XAUTHORITY=/home/$(whoami)/.Xauthority python3 {remote_path} &"
                 print("Запускаю (fallback режим)...")
             
             success, output = self.client.execute_command(cmd)
