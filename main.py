@@ -524,8 +524,8 @@ class HamsterPrank:
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
                     print("\nБлокирую экран на удаленке...")
-                    success, output = pranks.client.execute_command('gnome-screensaver-command --lock 2>/dev/null || xscreensaver-command -lock 2>/dev/null || dm-tool lock 2>/dev/null')
-                    print("✓ Экран заблокирован!" if success else f"✗ Ошибка: {output}")
+                    success, output = pranks.client.execute_command('gnome-screensaver-command --lock 2>/dev/null || xscreensaver-command -lock 2>/dev/null || dm-tool lock 2>/dev/null || loginctl lock-session 2>/dev/null')
+                    print("✓ Экран заблокирован!" if success and "error" not in output.lower() else f"✗ Ошибка: {output}")
                 input("\nНажми Enter...")
             else:
                 print("Неверный выбор!")
@@ -1538,7 +1538,7 @@ except:
                     
                     # Определяем цвет в зависимости от файла
                     color = 'white'
-                    duration = 7
+                    duration = 5
                     if 'chill' in filename.lower():
                         color = 'orange'
                     
