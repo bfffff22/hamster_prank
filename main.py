@@ -151,7 +151,7 @@ class HamsterPrank:
             print("\n✗ tkinter не обнаружен!")
             print("\nВыберите действие:")
             print("1. Установить tkinter автоматически")
-            print("2. Запустить альтернативный вариант (без GUI)")
+            print("2. Запустить HTML версию (в браузере)")
             print("0. Отмена")
             print()
             
@@ -167,6 +167,7 @@ class HamsterPrank:
                     return
                 
                 # Проверяем снова
+                checker.local_available = None  # Сбрасываем кеш
                 if checker.check_local():
                     print("✓ tkinter установлен!")
                     self.use_gui = True
@@ -175,14 +176,8 @@ class HamsterPrank:
                     input("\nНажми Enter...")
                     return
             elif choice == '2':
-                print("\nЗапускаю альтернативный вариант...")
-                # Запускаем консольную версию
-                if prank_type == 'fullscreen':
-                    from pranks.screen_flood import interactive_menu
-                    interactive_menu()
-                elif prank_type == 'window_chaos':
-                    from pranks.screen_flood import interactive_menu
-                    interactive_menu()
+                print("\nЗапускаю HTML версию в браузере...")
+                self._launch_html_prank(prank_type)
                 return
             else:
                 return
@@ -194,6 +189,104 @@ class HamsterPrank:
         elif prank_type == 'window_chaos':
             from pranks.window_chaos import interactive_menu
             interactive_menu()
+    
+    def _launch_html_prank(self, prank_type):
+        """Запустить HTML версию пранка"""
+        if prank_type == 'fullscreen':
+            # Создаем HTML файл с полноэкранным эффектом
+            html_content = '''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Prank</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+            font-family: monospace;
+        }
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Матрица эффект
+        const chars = '01';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+            
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        
+        setInterval(draw, 33);
+        
+        // Закрыть через 15 секунд
+        setTimeout(() => window.close(), 15000);
+        
+        // Закрыть по Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') window.close();
+        });
+        
+        // Открыть в полноэкранном режиме
+        document.documentElement.requestFullscreen().catch(() => {});
+    </script>
+</body>
+</html>'''
+            
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                f.write(html_content)
+                html_path = f.name
+            
+            # Открываем в браузере
+            import webbrowser
+            webbrowser.open('file://' + html_path)
+            
+            print("✓ HTML пранк запущен в браузере!")
+            print("Нажмите Escape в браузере для закрытия")
+            input("\nНажми Enter...")
+            
+            # Удаляем временный файл
+            import os
+            try:
+                os.unlink(html_path)
+            except:
+                pass
+        
+        elif prank_type == 'window_chaos':
+            print("HTML версия для управления окнами пока не реализована")
+            input("\nНажми Enter...")
     
     def ssh_menu(self):
         """Меню SSH операций"""
@@ -1284,31 +1377,11 @@ if __name__ == "__main__":
     
     app = HamsterPrank()
     
-    # Проверяем наличие tkinter при запуске
+    # Проверяем наличие tkinter при запуске (молча)
     from core.tkinter_check import checker
     
-    print("\nПроверка системы...")
     app.tkinter_available = checker.check_local()
-    
-    if app.tkinter_available:
-        print("✓ tkinter обнаружен")
-        print("\nВыберите режим работы:")
-        print("1. С GUI (полноэкранные окна, графические эффекты)")
-        print("2. Только консоль (текстовые эффекты в терминале)")
-        print()
-        choice = input("Ваш выбор (1/2, по умолчанию 1): ").strip()
-        app.use_gui = (choice != '2')
-    else:
-        print("✗ tkinter не обнаружен")
-        print("\nДоступны только консольные пранки.")
-        print("Для GUI пранков установите tkinter:")
-        print(checker.get_install_instructions('linux' if IS_LINUX else 'windows'))
-        print("\nПродолжить в консольном режиме?")
-        choice = input("(y/n, по умолчанию y): ").strip().lower()
-        if choice == 'n':
-            print("Выход...")
-            sys.exit(0)
-        app.use_gui = False
+    app.use_gui = app.tkinter_available  # Используем GUI если tkinter есть
     
     try:
         app.main_menu()

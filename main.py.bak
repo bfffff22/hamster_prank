@@ -560,13 +560,29 @@ except:
                 
                 if success:
                     print("Проверяю PIL...")
-                    # Проверяем, установлен ли PIL
+                    # Проверяем, установлен ли PIL с ImageTk
                     check_pil = 'python3 -c "from PIL import Image, ImageTk; import requests" 2>&1'
                     pil_check_success, pil_result = pranks.client.execute_command(check_pil)
                     
-                    if "ModuleNotFoundError" in pil_result or "No module named" in pil_result:
-                        print("Устанавливаю PIL и requests на удаленной машине...")
-                        pranks.client.execute_command("pip3 install Pillow requests 2>&1 || sudo apt-get install -y python3-pil python3-requests 2>&1")
+                    if "ModuleNotFoundError" in pil_result or "No module named" in pil_result or "cannot import name" in pil_result:
+                        print("Устанавливаю PIL, ImageTk и requests на удаленной машине...")
+                        pranks.client.execute_command("sudo apt-get install -y python3-pil python3-pil.imagetk python3-requests 2>&1 || pip3 install Pillow requests 2>&1")
+                        
+                        # Проверяем снова
+                        check_pil2 = 'python3 -c "from PIL import Image, ImageTk; import requests" 2>&1'
+                        pil_check2, pil_result2 = pranks.client.execute_command(check_pil2)
+                        
+                        if "ModuleNotFoundError" in pil_result2 or "cannot import name" in pil_result2:
+                            print("✗ Не удалось установить необходимые модули")
+                            print("Выполните на удаленной машине: sudo apt-get install python3-pil python3-pil.imagetk python3-requests")
+                            import os
+                            os.unlink(local_path)
+                            input("\nНажми Enter...")
+                            continue
+                        else:
+                            print("✓ Модули установлены!")
+                    else:
+                        print("✓ Все модули доступны")
                     
                     print("Запускаю показ картинки...")
                     pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
