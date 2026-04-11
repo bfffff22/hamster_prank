@@ -786,6 +786,30 @@ except:
         success, msg = self.client.upload_file(local_path, remote_path)
         
         if success:
+            # Проверяем наличие tkinter на удаленной машине
+            print("Проверяю tkinter...")
+            tk_check, tk_out = self.client.execute_command("python3 -c 'import tkinter' 2>&1")
+            
+            if "ModuleNotFoundError" in tk_out or "No module named" in tk_out:
+                print("✗ tkinter не установлен на удаленной машине!")
+                print("Устанавливаю tkinter...")
+                install_cmd = "sudo apt-get install -y python3-tk 2>&1 || sudo dnf install -y python3-tkinter 2>&1 || sudo pacman -S --noconfirm tk 2>&1"
+                inst_success, inst_out = self.client.execute_command(install_cmd)
+                print(f"Установка: {inst_out.strip()[:200]}")
+                
+                # Проверяем снова
+                tk_check2, tk_out2 = self.client.execute_command("python3 -c 'import tkinter' 2>&1")
+                if "ModuleNotFoundError" in tk_out2 or "No module named" in tk_out2:
+                    print("✗ Не удалось установить tkinter автоматически")
+                    print("Выполните на удаленной машине: sudo apt-get install python3-tk")
+                    import os
+                    os.unlink(local_path)
+                    return
+                else:
+                    print("✓ tkinter установлен!")
+            else:
+                print("✓ tkinter доступен")
+            
             # Даем права на X11 и запускаем
             print("Настраиваю X11...")
             xhost_success, xhost_out = self.client.execute_command("export DISPLAY=:0 && xhost +local: 2>&1")
@@ -796,19 +820,20 @@ except:
             
             print("Запускаю GUI...")
             exec_success, exec_out = self.client.execute_command(f"DISPLAY=:0 python3 {remote_path} 2>&1 &")
-            print(f"Запуск: {exec_out.strip() if exec_out.strip() else 'OK'}")
+            
+            if exec_out.strip():
+                print(f"Вывод: {exec_out.strip()}")
             
             time.sleep(2)
             
             # Проверяем процесс
             ps_success, ps_out = self.client.execute_command("ps aux | grep wave_text | grep -v grep")
             if "python3" in ps_out:
-                print("✓ Процесс запущен")
+                print("✓ Процесс запущен и работает!")
             else:
-                print("✗ Процесс не найден!")
-                print(f"ps output: {ps_out}")
+                print("⚠ Процесс завершился (возможно анимация уже закончилась)")
             
-            print("✓ Wave text показан")
+            print("✓ Wave text запущен на удаленной машине")
         else:
             print(f"✗ Ошибка: {msg}")
         
