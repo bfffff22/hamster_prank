@@ -823,56 +823,51 @@ except:
                 
                 elif choice == '2':
                     print("\nЗапускаю консольную версию...")
-                    # Показываем текст в консоли с анимацией
-                    console_script = f'''#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+                    # Показываем текст в консоли с анимацией - запускаем в новом терминале
+                    console_script = f'''#!/bin/bash
+export DISPLAY=:0
+xterm -fullscreen -bg black -fg cyan -e python3 -c "
 import time
 import sys
 import math
 
-text = "{text}"
+text = '{text}'
 duration = {duration}
 start_time = time.time()
 
 try:
     while time.time() - start_time < duration:
-        # Очищаем экран
-        print("\\033[2J\\033[H", end="")
-        
-        # Вычисляем волну
+        print('\\033[2J\\033[H', end='')
         current_time = time.time() - start_time
         lines = []
         for i, char in enumerate(text):
             offset = int(5 * math.sin(current_time * 5 + i * 0.5))
-            lines.append(" " * (40 + offset) + char)
-        
-        # Выводим по центру экрана
-        print("\\n" * 10)
+            lines.append(' ' * (40 + offset) + char)
+        print('\\n' * 10)
         for line in lines:
             print(line)
-        
         sys.stdout.flush()
         time.sleep(0.05)
-    
-    print("\\033[2J\\033[H")  # Очищаем в конце
+    print('\\033[2J\\033[H')
 except KeyboardInterrupt:
-    print("\\033[2J\\033[H")
+    print('\\033[2J\\033[H')
+" &
 '''
                     import tempfile
-                    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False, encoding='utf-8') as f:
                         f.write(console_script)
                         console_path = f.name
                     
-                    remote_console = "/tmp/.wave_console.py"
+                    remote_console = "/tmp/.wave_console.sh"
                     self.client.upload_file(console_path, remote_console)
                     self.client.execute_command(f"chmod +x {remote_console}")
-                    self.client.execute_command(f"python3 {remote_console} &")
+                    self.client.execute_command(f"bash {remote_console} &")
                     
                     import os
                     os.unlink(console_path)
                     os.unlink(local_path)
                     
-                    print("✓ Консольная версия запущена!")
+                    print("✓ Консольная версия запущена в новом терминале!")
                     return
                 else:
                     import os
