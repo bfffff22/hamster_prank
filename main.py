@@ -524,8 +524,24 @@ class HamsterPrank:
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
                     print("\nБлокирую экран на удаленке...")
-                    success, output = pranks.client.execute_command('gnome-screensaver-command --lock 2>/dev/null || xscreensaver-command -lock 2>/dev/null || dm-tool lock 2>/dev/null || loginctl lock-session 2>/dev/null')
-                    print("✓ Экран заблокирован!" if success and "error" not in output.lower() else f"✗ Ошибка: {output}")
+                # Попробовать разные способы блокировки экрана
+                lock_commands = [
+                    'gnome-screensaver-command --lock',
+                    'xscreensaver-command -lock', 
+                    'dm-tool lock',
+                    'loginctl lock-session',
+                    'i3lock -c 000000',  # альтернатива для i3
+                    'light-locker-command --lock'
+                ]
+                
+                success = False
+                for cmd in lock_commands:
+                    cmd_result, output = pranks.client.execute_command(f'{cmd} 2>&1')
+                    if cmd_result:
+                        success = True
+                        break
+                
+                print("✓ Экран заблокирован!" if success else "⚠ Блокировка экрана возможна не выполнена")
                 input("\nНажми Enter...")
             else:
                 print("Неверный выбор!")
@@ -1343,8 +1359,24 @@ except:
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
                     print("\nБлокирую экран на удаленке...")
-                    success, output = pranks.client.execute_command('gnome-screensaver-command --lock 2>/dev/null || xscreensaver-command -lock 2>/dev/null || dm-tool lock 2>/dev/null')
-                    print("✓ Экран заблокирован!" if success else f"✗ Ошибка: {output}")
+                    # Попробовать разные способы блокировки экрана
+                    lock_commands = [
+                        'gnome-screensaver-command --lock',
+                        'xscreensaver-command -lock', 
+                        'dm-tool lock',
+                        'loginctl lock-session',
+                        'i3lock -c 000000',  # альтернатива для i3
+                        'light-locker-command --lock'
+                    ]
+                    
+                    success = False
+                    for cmd in lock_commands:
+                        cmd_result, output = pranks.client.execute_command(f'{cmd} 2>&1')
+                        if cmd_result:
+                            success = True
+                            break
+                    
+                    print("✓ Экран заблокирован!" if success else "⚠ Блокировка экрана возможна не выполнена")
                 input("\nНажми Enter...")
             elif choice == '10':
                 duration = input("Длительность хаоса (сек, по умолчанию 30): ").strip()
