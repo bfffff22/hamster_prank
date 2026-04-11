@@ -830,22 +830,41 @@ root.mainloop()
 import tkinter as tk
 import random
 import time
+import os
+
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
 
 root = tk.Tk()
+root.withdraw()
 root.title("Тряска")
 root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f'{{screen_width}}x{{screen_height}}+0+0')
+
+root.deiconify()
+root.focus_force()
 
 text_widget = tk.Text(root, bg='black', fg='white', font=('Courier', 24), wrap='word')
 text_widget.pack(expand=True, fill='both', padx=100, pady=200)
 text_widget.insert('1.0', '{text}')
 text_widget.tag_add('shake', '1.0', 'end')
+text_widget.config(state='disabled')
+
+shake_count = [0]
 
 def shake():
-    dx = random.randint(-5, 5)
-    dy = random.randint(-5, 5)
-    root.geometry(f"+{root.winfo_x() + dx}+{root.winfo_y() + dy}")
-    root.after(50, shake)
+    if shake_count[0] < 100:
+        dx = random.randint(-5, 5)
+        dy = random.randint(-5, 5)
+        text_widget.place(x=100+dx, y=200+dy)
+        shake_count[0] += 1
+        root.after(50, shake)
 
 shake()
 
@@ -855,26 +874,46 @@ def close(event=None):
 root.bind('<Escape>', close)
 root.bind('q', close)
 root.after(5000, close)
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 '''
                 elif choice == '8':  # Спам
                     script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import random
+import os
+
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
 
 root = tk.Tk()
+root.withdraw()
 root.title("Спам")
 root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f'{{screen_width}}x{{screen_height}}+0+0')
+
+root.deiconify()
+root.focus_force()
 
 canvas = tk.Canvas(root, bg='black', highlightthickness=0)
 canvas.pack(fill='both', expand=True)
 
-for _ in range(20):
-    x = random.randint(50, root.winfo_width()-50)
-    y = random.randint(50, root.winfo_height()-50)
-    canvas.create_text(x, y, text='{text}', fill='white', font=('Courier', random.randint(10, 30)))
+root.update()
+
+for _ in range(50):
+    x = random.randint(50, screen_width-50)
+    y = random.randint(50, screen_height-50)
+    canvas.create_text(x, y, text='{text}', fill='white', font=('Courier', random.randint(10, 50)))
 
 def close(event=None):
     root.destroy()
@@ -882,7 +921,11 @@ def close(event=None):
 root.bind('<Escape>', close)
 root.bind('q', close)
 root.after(5000, close)
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 '''
 
                 # Загружаем и запускаем скрипт на удаленке
