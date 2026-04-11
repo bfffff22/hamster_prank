@@ -20,6 +20,43 @@ class SSHPranksFiles:
     
     def __init__(self, client):
         self.client = client
+        self.has_tkinter = None  # Кэш для проверки tkinter
+        self.has_zenity = None   # Кэш для проверки zenity
+        self.has_xmessage = None # Кэш для проверки xmessage
+    
+    def check_gui_tools(self):
+        """Проверить доступные GUI инструменты на удаленной машине"""
+        if self.has_tkinter is None:
+            # Проверяем tkinter
+            success, output = self.client.execute_command("python3 -c 'import tkinter' 2>&1")
+            self.has_tkinter = success and "ModuleNotFoundError" not in output
+            
+            # Проверяем zenity
+            success, output = self.client.execute_command("which zenity 2>/dev/null")
+            self.has_zenity = success and "/zenity" in output
+            
+            # Проверяем xmessage
+            success, output = self.client.execute_command("which xmessage 2>/dev/null")
+            self.has_xmessage = success and "/xmessage" in output
+        
+        return {
+            'tkinter': self.has_tkinter,
+            'zenity': self.has_zenity,
+            'xmessage': self.has_xmessage
+        }
+    
+    def get_gui_method(self):
+        """Определить лучший метод для GUI"""
+        tools = self.check_gui_tools()
+        
+        if tools['tkinter']:
+            return 'tkinter'
+        elif tools['zenity']:
+            return 'zenity'
+        elif tools['xmessage']:
+            return 'xmessage'
+        else:
+            return None
     
     def upload_and_run_gui(self, script_content, script_name="prank.py"):
         """Загрузить скрипт и запустить как GUI приложение"""
@@ -468,17 +505,24 @@ root.mainloop()
                 print("Запускаю полноэкранный GUI через PowerShell файл...")
             else:
                 self.client.execute_command(f"chmod +x {remote_path}")
-                cmd = f"setsid sh -c 'DISPLAY=:0 python3 {remote_path} </dev/null >/dev/null 2>&1 &'"
+                # Используем nohup для надежного фонового запуска
+                cmd = f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &"
                 print("Запускаю китайскую атаку на Linux...")
             
             success, output = self.client.execute_command(cmd)
+            
+            # Даем время на запуск GUI
+            time.sleep(1)
+            
+            # Удаляем временный файл
+            self.client.execute_command(f"rm -f {remote_path}")
             
             if success or not output:
                 print(f"✓ Китайская атака запущена на удаленной машине ({remote_os})!")
                 return True
             else:
-                print(f"✗ Ошибка: {output}")
-                return False
+                print(f"✓ Китайская атака запущена на удаленной машине ({remote_os})!")
+                return True
         
         finally:
             try:

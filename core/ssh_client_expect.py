@@ -8,7 +8,6 @@ SSH клиент с автовводом пароля через expect скри
 import subprocess
 import sys
 import os
-import getpass
 import tempfile
 from pathlib import Path
 
@@ -41,9 +40,9 @@ class SSHClientExpect:
             if result.returncode != 0:
                 return False, "SSH не найден в системе"
             
+            # Пароль должен быть передан при создании объекта или уже сохранен
             if not self.password:
-                self.password = getpass.getpass(f"Пароль для {self.user}@{self.host}: ")
-                SSHClientExpect._passwords[self.connection_key] = self.password
+                return False, "Пароль не указан. Используйте ключи SSH или передайте пароль при создании клиента."
             
             self.connected = True
             return True, "SSH доступен (пароль сохранен)"
