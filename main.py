@@ -474,138 +474,30 @@ class HamsterPrank:
                     continue
                 duration = input("Длительность (сек, по умолчанию 5): ").strip()
                 duration = int(duration) if duration.isdigit() else 5
-                print("\nЗапускаю отображение картинки на удаленке...")
+                print("\nОткрываю картинку в браузере на удаленке...")
                 
-                # Создаем скрипт для показа изображения
-                script = f'''#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import tkinter as tk
-from PIL import Image, ImageTk
-import requests
-from io import BytesIO
-import os
-
-if 'DISPLAY' not in os.environ:
-    os.environ['DISPLAY'] = ':0'
-
-root = tk.Tk()
-root.withdraw()
-root.title("Полноэкранная картинка")
-root.attributes('-fullscreen', True)
-root.attributes('-topmost', True)
-root.configure(bg='black')
-root.overrideredirect(True)
-
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
-root.geometry(f'{{screen_width}}x{{screen_height}}+0+0')
-
-root.deiconify()
-root.focus_force()
-
-try:
-    # Загружаем изображение по URL
-    response = requests.get("{image_url}", timeout=10)
-    response.raise_for_status()
-    
-    # Открываем изображение
-    img_data = Image.open(BytesIO(response.content))
-    
-    # Изменяем размер чтобы поместить в экран
-    img_width, img_height = img_data.size
-    ratio = min(screen_width/img_width, screen_height/img_height)
-    new_width = int(img_width * ratio)
-    new_height = int(img_height * ratio)
-    
-    img_resized = img_data.resize((new_width, new_height), Image.Resampling.LANCZOS)
-    
-    # Конвертируем в PhotoImage
-    photo = ImageTk.PhotoImage(img_resized)
-    
-    # Создаем Label для отображения
-    label = tk.Label(root, image=photo, bg='black')
-    label.pack(expand=True)
-    
-    # Сохраняем ссылку на фото
-    label.image = photo
-
-except Exception as e:
-    # Если ошибка загрузки, показываем сообщение
-    error_label = tk.Label(root, text=f'Ошибка загрузки изображения:\\n{{e}}', 
-                          bg='black', fg='red', font=('Courier', 16))
-    error_label.pack(expand=True)
-
-def close(event=None):
-    root.destroy()
-
-root.bind('<Escape>', close)
-root.bind('q', close)
-root.bind('Q', close)
-root.after({duration}000, close)
-
-try:
-    root.mainloop()
-except:
-    pass
-'''
+                # Открываем URL в браузере на удаленной машине
+                success, output = pranks.client.execute_command(f"DISPLAY=:0 xdg-open '{image_url}' 2>&1 || DISPLAY=:0 firefox '{image_url}' 2>&1 || DISPLAY=:0 chromium '{image_url}' 2>&1 &")
                 
-                # Загружаем и запускаем на удаленке
-                import tempfile
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
-                    f.write(script)
-                    local_path = f.name
+                time.sleep(2)
                 
-                remote_path = "/tmp/.image_viewer.py"
-                success, msg = pranks.client.upload_file(local_path, remote_path)
-                
-                if success:
-                    print("Проверяю PIL...")
-                    # Проверяем, установлен ли PIL с ImageTk
-                    check_pil = 'python3 -c "from PIL import Image, ImageTk; import requests" 2>&1'
-                    pil_check_success, pil_result = pranks.client.execute_command(check_pil)
+                # Проверяем что браузер запустился
+                ps_success, ps_out = pranks.client.execute_command("ps aux | grep -E 'firefox|chromium|chrome' | grep -v grep")
+                if ps_out.strip():
+                    print("✓ Браузер запущен, картинка открыта!")
+                    print(f"Картинка будет показана {duration} секунд")
                     
-                    if "ModuleNotFoundError" in pil_result or "No module named" in pil_result or "cannot import name" in pil_result:
-                        print("Устанавливаю PIL, ImageTk и requests на удаленной машине...")
-                        pranks.client.execute_command("sudo apt-get install -y python3-pil python3-pil.imagetk python3-requests 2>&1 || pip3 install Pillow requests 2>&1")
-                        
-                        # Проверяем снова
-                        check_pil2 = 'python3 -c "from PIL import Image, ImageTk; import requests" 2>&1'
-                        pil_check2, pil_result2 = pranks.client.execute_command(check_pil2)
-                        
-                        if "ModuleNotFoundError" in pil_result2 or "cannot import name" in pil_result2:
-                            print("✗ Не удалось установить необходимые модули")
-                            print("Выполните на удаленной машине: sudo apt-get install python3-pil python3-pil.imagetk python3-requests")
-                            import os
-                            os.unlink(local_path)
-                            input("\nНажми Enter...")
-                            continue
-                        else:
-                            print("✓ Модули установлены!")
-                    else:
-                        print("✓ Все модули доступны")
+                    # Ждем указанное время
+                    time.sleep(duration)
                     
-                    print("Запускаю показ картинки...")
-                    pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
-                    pranks.client.execute_command(f"chmod +x {remote_path}")
-                    
-                    # Запускаем БЕЗ удаления файла
-                    pranks.client.execute_command(f"DISPLAY=:0 python3 {remote_path} &")
-                    
-                    time.sleep(3)  # Даем время на запуск
-                    
-                    # Проверяем процесс
-                    ps_success, ps_out = pranks.client.execute_command("ps aux | grep image_viewer | grep -v grep")
-                    if "python3" in ps_out:
-                        print("✓ Процесс запущен и работает!")
-                    else:
-                        print("⚠ Процесс завершился")
-                    
-                    print("✓ Картинка показана!")
+                    # Закрываем браузер
+                    print("Закрываю браузер...")
+                    pranks.client.execute_command("pkill -f 'firefox|chromium|chrome' 2>/dev/null")
+                    print("✓ Готово!")
                 else:
-                    print(f"✗ Ошибка: {msg}")
+                    print("⚠ Браузер не найден или не запустился")
+                    print("Установите firefox или chromium на удаленной машине")
                 
-                import os
-                os.unlink(local_path)
                 input("\nНажми Enter...")
             elif choice == '5':
                 text = input("Текст для окна: ").strip()
