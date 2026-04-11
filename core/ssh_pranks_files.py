@@ -822,52 +822,51 @@ except:
                         print("✓ tkinter установлен!")
                 
                 elif choice == '2':
-                    print("\nЗапускаю консольную версию...")
-                    # Показываем текст в консоли с анимацией - запускаем в новом терминале
-                    console_script = f'''#!/bin/bash
-export DISPLAY=:0
-xterm -fullscreen -bg black -fg cyan -e python3 -c "
+                    print("\nЗапускаю консольную версию в SSH терминале...")
+                    # Запускаем анимацию прямо в текущем SSH терминале
+                    console_cmd = f'''python3 << 'PRANK_EOF'
 import time
 import sys
 import math
 
-text = '{text}'
+text = "{text}"
 duration = {duration}
 start_time = time.time()
 
+print("\\033[?25l")  # Скрываем курсор
+
 try:
     while time.time() - start_time < duration:
-        print('\\033[2J\\033[H', end='')
+        print("\\033[2J\\033[H", end="", flush=True)
+        
         current_time = time.time() - start_time
-        lines = []
+        
+        print("\\n" * 10)
         for i, char in enumerate(text):
             offset = int(5 * math.sin(current_time * 5 + i * 0.5))
-            lines.append(' ' * (40 + offset) + char)
-        print('\\n' * 10)
-        for line in lines:
-            print(line)
-        sys.stdout.flush()
+            print(" " * (40 + offset) + char)
+        
         time.sleep(0.05)
-    print('\\033[2J\\033[H')
+    
+    print("\\033[2J\\033[H", end="", flush=True)
+    print("\\033[?25h")  # Показываем курсор
 except KeyboardInterrupt:
-    print('\\033[2J\\033[H')
-" &
+    print("\\033[2J\\033[H", end="", flush=True)
+    print("\\033[?25h")
+PRANK_EOF
 '''
-                    import tempfile
-                    with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False, encoding='utf-8') as f:
-                        f.write(console_script)
-                        console_path = f.name
                     
-                    remote_console = "/tmp/.wave_console.sh"
-                    self.client.upload_file(console_path, remote_console)
-                    self.client.execute_command(f"chmod +x {remote_console}")
-                    self.client.execute_command(f"bash {remote_console} &")
+                    print("Запускаю анимацию...")
+                    success, output = self.client.execute_command(console_cmd)
+                    
+                    if not success and output:
+                        print(f"Ошибка: {output}")
                     
                     import os
-                    os.unlink(console_path)
                     os.unlink(local_path)
                     
-                    print("✓ Консольная версия запущена в новом терминале!")
+                    print("\n✓ Анимация завершена!")
+                    input("Нажми Enter...")
                     return
                 else:
                     import os
