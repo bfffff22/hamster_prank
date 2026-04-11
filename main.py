@@ -571,8 +571,22 @@ except:
                     print("Запускаю показ картинки...")
                     pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
                     pranks.client.execute_command(f"chmod +x {remote_path}")
-                    pranks.client.execute_command(f"DISPLAY=:0 python3 {remote_path} 2>&1 &")
-                    time.sleep(1)
+                    
+                    # Запускаем с выводом ошибок для отладки
+                    exec_success, exec_out = pranks.client.execute_command(f"DISPLAY=:0 python3 {remote_path} 2>&1 &")
+                    
+                    if exec_out.strip():
+                        print(f"Вывод: {exec_out.strip()}")
+                    
+                    time.sleep(2)
+                    
+                    # Проверяем процесс
+                    ps_success, ps_out = pranks.client.execute_command("ps aux | grep image_viewer | grep -v grep")
+                    if "python3" in ps_out:
+                        print("✓ Процесс запущен!")
+                    else:
+                        print("⚠ Процесс не найден - возможно картинка уже показана или ошибка загрузки")
+                    
                     pranks.client.execute_command(f"rm -f {remote_path}")
                     print("✓ Картинка показана!")
                 else:
