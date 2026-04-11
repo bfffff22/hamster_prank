@@ -216,6 +216,10 @@ class HamsterPrank:
         
         host, port, user = parse_ssh_string(host_str)
         
+        # Запрашиваем пароль
+        import getpass
+        password = getpass.getpass(f"Пароль для {user}@{host}: ")
+        
         # Сохраняем в конфиг
         if host not in [h.get('host') for h in self.config['ssh_hosts']]:
             self.config['ssh_hosts'].append({
@@ -224,7 +228,7 @@ class HamsterPrank:
             })
             self.save_config()
         
-        client = SSHClientExpect(host, port, user)
+        client = SSHClientExpect(host, port, user, password)
         success, msg = client.connect()
         
         if success:
