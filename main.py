@@ -97,8 +97,7 @@ class HamsterPrank:
             print("3. Текстовые эффекты")
             print("4. Управление окнами")
             print("5. Запустить программу")
-            print("6. Показать Skull (ASCII-арт)")
-            print("7. Показать Anime (ASCII-арт)")
+            print("6. ASCII-арт")
             print("0. Назад")
             print()
             
@@ -118,14 +117,31 @@ class HamsterPrank:
                 cmd = input("Команда для запуска: ")
                 os.system(cmd)
             elif choice == '6':
-                self.show_ascii_art('skull.txt')
-            elif choice == '7':
-                self.show_ascii_art('anime.txt')
+                self.ascii_art_menu()
             elif choice == '0':
                 break
             
             if choice != '0' and choice == '5':
                 input("\nНажми Enter для продолжения...")
+    
+    def ascii_art_menu(self):
+        """Меню ASCII-арт"""
+        while True:
+            self.clear_screen()
+            print("=== ASCII-АРТ ===\n")
+            print("1. Skull")
+            print("2. Chill")
+            print("0. Назад")
+            print()
+            
+            choice = input("Выбери: ").strip()
+            
+            if choice == '1':
+                self.show_ascii_art('skull.txt')
+            elif choice == '2':
+                self.show_ascii_art('chill.txt')
+            elif choice == '0':
+                break
     
     def _launch_prank_with_tkinter_check(self, prank_type):
         """Запустить пранк с проверкой tkinter"""
@@ -268,8 +284,7 @@ class HamsterPrank:
             print("3. Текстовые эффекты")
             print("4. Управление окнами")
             print("5. Запустить программу")
-            print("6. Показать Skull (ASCII-арт)")
-            print("7. Показать Anime (ASCII-арт)")
+            print("6. ASCII-арт")
             print("0. Назад")
             print()
             
@@ -292,9 +307,26 @@ class HamsterPrank:
                     print(output)
                     input("\nНажми Enter...")
             elif choice == '6':
+                self.ssh_ascii_art_menu(pranks)
+            elif choice == '0':
+                break
+    
+    def ssh_ascii_art_menu(self, pranks):
+        """Меню ASCII-арт для SSH"""
+        while True:
+            self.clear_screen()
+            print("=== ASCII-АРТ (SSH) ===\n")
+            print("1. Skull")
+            print("2. Chill")
+            print("0. Назад")
+            print()
+            
+            choice = input("Выбери: ").strip()
+            
+            if choice == '1':
                 self.ssh_show_ascii_art(pranks, 'skull.txt')
-            elif choice == '7':
-                self.ssh_show_ascii_art(pranks, 'anime.txt')
+            elif choice == '2':
+                self.ssh_show_ascii_art(pranks, 'chill.txt')
             elif choice == '0':
                 break
     

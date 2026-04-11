@@ -378,6 +378,7 @@ def init_columns():
 
 def update():
     canvas.delete('all')
+    width = root.winfo_screenwidth()
     height = root.winfo_screenheight()
     
     for col in columns:
