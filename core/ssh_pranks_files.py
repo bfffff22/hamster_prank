@@ -787,11 +787,27 @@ except:
         
         if success:
             # Даем права на X11 и запускаем
-            self.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
+            print("Настраиваю X11...")
+            xhost_success, xhost_out = self.client.execute_command("export DISPLAY=:0 && xhost +local: 2>&1")
+            print(f"xhost: {xhost_out.strip()}")
+            
+            print("Делаю скрипт исполняемым...")
             self.client.execute_command(f"chmod +x {remote_path}")
-            self.client.execute_command(f"DISPLAY=:0 python3 {remote_path} &")
-            time.sleep(1)
-            self.client.execute_command(f"rm -f {remote_path}")
+            
+            print("Запускаю GUI...")
+            exec_success, exec_out = self.client.execute_command(f"DISPLAY=:0 python3 {remote_path} 2>&1 &")
+            print(f"Запуск: {exec_out.strip() if exec_out.strip() else 'OK'}")
+            
+            time.sleep(2)
+            
+            # Проверяем процесс
+            ps_success, ps_out = self.client.execute_command("ps aux | grep wave_text | grep -v grep")
+            if "python3" in ps_out:
+                print("✓ Процесс запущен")
+            else:
+                print("✗ Процесс не найден!")
+                print(f"ps output: {ps_out}")
+            
             print("✓ Wave text показан")
         else:
             print(f"✗ Ошибка: {msg}")
