@@ -352,10 +352,19 @@ if 'DISPLAY' not in os.environ:
     os.environ['DISPLAY'] = ':0'
 
 root = tk.Tk()
+root.withdraw()  # Скрываем окно перед настройкой
 root.attributes('-fullscreen', True)
 root.attributes('-topmost', True)
 root.configure(bg='black')
 root.overrideredirect(True)
+
+# Получаем размеры экрана и устанавливаем геометрию
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f'{screen_width}x{screen_height}+0+0')
+
+root.deiconify()  # Показываем окно после настройки
+root.focus_force()  # Принудительно получаем фокус
 
 canvas = tk.Canvas(root, bg='black', highlightthickness=0)
 canvas.pack(fill='both', expand=True)
