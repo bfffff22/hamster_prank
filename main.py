@@ -212,7 +212,7 @@ class HamsterPrank:
     
     def ssh_get_connection(self):
         """Получить SSH подключение"""
-        from core.ssh_client_expect import SSHClientExpect, parse_ssh_string
+        from core.ssh_client_paramiko import SSHClientSimple, parse_ssh_string
         
         print("\n=== SSH ПОДКЛЮЧЕНИЕ ===")
         host_str = input("Хост (user@ip:port): ").strip()
@@ -226,7 +226,7 @@ class HamsterPrank:
         import getpass
         password = getpass.getpass(f"Пароль для {user}@{host}: ")
         
-        client = SSHClientExpect(host, port, user, password)
+        client = SSHClientSimple(host, port, user, password)
         success, msg = client.connect()
         
         if success:
