@@ -774,8 +774,13 @@ root.mainloop()
                                 continue
                             print("✓ tkinter установлен!")
                         elif action == '2':
-                            # Используем консольные эффекты
-                            choice = '3'  # Волна или радуга
+                            # Запускаем HTML версию
+                            text = input("Текст: ").strip()
+                            if not text:
+                                text = "ПРАНК!"
+                            
+                            self._ssh_launch_text_effect_html(pranks, choice, text)
+                            continue
                         else:
                             continue
                 
@@ -1053,6 +1058,56 @@ except:
             else:
                 print("Неверный выбор!")
                 input("\nНажми Enter...")
+    
+    def _ssh_launch_text_effect_html(self, pranks, effect_choice, text):
+        """Запустить HTML версию текстового эффекта на удаленной машине"""
+        from core.html_pranks import generate_wave_text_html, generate_rainbow_text_html
+        
+        duration = 5
+        html_content = None
+        effect_name = ""
+        
+        if effect_choice in ['1', '2', '6', '7', '8']:
+            # Для этих эффектов используем волну или радугу
+            html_content = generate_wave_text_html(text, duration)
+            effect_name = "wave"
+        elif effect_choice == '3':
+            html_content = generate_wave_text_html(text, duration)
+            effect_name = "wave"
+        elif effect_choice == '4':
+            html_content = generate_wave_text_html(text, duration)
+            effect_name = "typewriter"
+        elif effect_choice == '5':
+            html_content = generate_rainbow_text_html(text, duration)
+            effect_name = "rainbow"
+        
+        if html_content:
+            print(f"\nЗапускаю {effect_name} в браузере на удаленке...")
+            
+            # Создаем временный HTML файл
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                f.write(html_content)
+                local_path = f.name
+            
+            # Загружаем на удаленку
+            remote_path = f"/tmp/.text_effect_{effect_name}.html"
+            success, msg = pranks.client.upload_file(local_path, remote_path)
+            
+            if success:
+                # Открываем в браузере в полноэкранном режиме
+                pranks.client.execute_command(f"DISPLAY=:0 firefox --kiosk file://{remote_path} 2>&1 || DISPLAY=:0 chromium --kiosk file://{remote_path} 2>&1 &")
+                
+                time.sleep(2)
+                
+                print(f"✓ {effect_name} запущен в браузере!")
+                print(f"Эффект закроется автоматически через {duration} секунд")
+            else:
+                print(f"✗ Ошибка загрузки: {msg}")
+            
+            import os
+            os.unlink(local_path)
+            input("\nНажми Enter...")
     
     def ssh_window_control(self, pranks):
         """Подменю управления окнами через SSH"""
