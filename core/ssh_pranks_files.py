@@ -133,7 +133,7 @@ class SSHPranksFiles:
             except:
                 pass
     
-    def screen_flood(self, duration=10):
+    def screen_flood(self, duration=10, char=None, speed='fast'):
         """Заливка экрана - полноэкранное GUI окно"""
         
         # Определяем ОС

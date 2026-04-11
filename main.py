@@ -1170,7 +1170,7 @@ root.mainloop()
             if 'skull' in filename.lower():
                 color = 'white'
                 bg_color = 'black'
-            elif 'anime' in filename.lower():
+            elif 'chill' in filename.lower():
                 color = 'orange'
                 bg_color = 'black'
             else:
