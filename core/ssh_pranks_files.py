@@ -713,14 +713,22 @@ subprocess.run(['powershell', '-Command', ps_script])
     def wave_text(self, text, duration=5):
         """Волна текста в GUI окне"""
         script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import tkinter as tk
 import time
 import math
+import os
+
+# Устанавливаем DISPLAY
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
 
 root = tk.Tk()
 root.title("Wave Text")
 root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
 
 canvas = tk.Canvas(root, bg='black', highlightthickness=0)
 canvas.pack(fill='both', expand=True)
@@ -736,8 +744,8 @@ def animate():
         return
     
     canvas.delete('all')
-    width = root.winfo_width()
-    height = root.winfo_height()
+    width = root.winfo_screenwidth()
+    height = root.winfo_screenheight()
     
     # Отображаем каждый символ с волной
     char_spacing = min(width // len("{text}"), font_size * 2) if len("{text}") > 0 else font_size
@@ -762,7 +770,11 @@ def close(event=None):
 root.bind('<Escape>', close)
 root.bind('q', close)
 root.bind('Q', close)
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 '''
         
         import tempfile
@@ -770,31 +782,41 @@ root.mainloop()
             f.write(script)
             local_path = f.name
         
-        remote_path = "~/.wave_text.py"
+        remote_path = "/tmp/.wave_text.py"
         success, msg = self.client.upload_file(local_path, remote_path)
         
         if success:
-            self.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
-            time.sleep(0.5)  # даем время на запуск
-            self.client.execute_command(f"rm {remote_path}")
+            # Даем права на X11 и запускаем
+            self.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
+            self.client.execute_command(f"chmod +x {remote_path}")
+            self.client.execute_command(f"DISPLAY=:0 python3 {remote_path} &")
+            time.sleep(1)
+            self.client.execute_command(f"rm -f {remote_path}")
             print("✓ Wave text показан")
         else:
             print(f"✗ Ошибка: {msg}")
         
         import os
         os.unlink(local_path)
-        time.sleep(duration + 1)  # ждем завершения анимации
 
     def rainbow_text(self, text, duration=5):
         """Радужный текст в GUI окне"""
         script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import tkinter as tk
 import time
+import os
+
+# Устанавливаем DISPLAY
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
 
 root = tk.Tk()
 root.title("Rainbow Text")
 root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
 
 canvas = tk.Canvas(root, bg='black', highlightthickness=0)
 canvas.pack(fill='both', expand=True)
@@ -809,8 +831,8 @@ def animate():
         return
     
     canvas.delete('all')
-    width = root.winfo_width()
-    height = root.winfo_height()
+    width = root.winfo_screenwidth()
+    height = root.winfo_screenheight()
     
     # Вычисляем позиции для текста
     char_width = min(width // len("{text}"), 30) if len("{text}") > 0 else 20
@@ -834,7 +856,11 @@ def close(event=None):
 root.bind('<Escape>', close)
 root.bind('q', close)
 root.bind('Q', close)
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 '''
         
         import tempfile
@@ -842,20 +868,21 @@ root.mainloop()
             f.write(script)
             local_path = f.name
         
-        remote_path = "~/.rainbow_text.py"
+        remote_path = "/tmp/.rainbow_text.py"
         success, msg = self.client.upload_file(local_path, remote_path)
         
         if success:
-            self.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
-            time.sleep(0.5)  # даем время на запуск
-            self.client.execute_command(f"rm {remote_path}")
+            self.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
+            self.client.execute_command(f"chmod +x {remote_path}")
+            self.client.execute_command(f"DISPLAY=:0 python3 {remote_path} &")
+            time.sleep(1)
+            self.client.execute_command(f"rm -f {remote_path}")
             print("✓ Rainbow text показан")
         else:
             print(f"✗ Ошибка: {msg}")
         
         import os
         os.unlink(local_path)
-        time.sleep(duration + 1)  # ждем завершения анимации
 
     def show_gui_message(self, text, duration=5):
         """GUI сообщение"""
