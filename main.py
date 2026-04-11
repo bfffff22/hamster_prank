@@ -478,30 +478,40 @@ class HamsterPrank:
                 
                 # Создаем скрипт для показа изображения
                 script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import tkinter as tk
 from PIL import Image, ImageTk
 import requests
 from io import BytesIO
-import tempfile
 import os
 
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
+
 root = tk.Tk()
+root.withdraw()
 root.title("Полноэкранная картинка")
 root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f'{{screen_width}}x{{screen_height}}+0+0')
+
+root.deiconify()
+root.focus_force()
 
 try:
     # Загружаем изображение по URL
-    response = requests.get("{image_url}")
+    response = requests.get("{image_url}", timeout=10)
     response.raise_for_status()
     
     # Открываем изображение
     img_data = Image.open(BytesIO(response.content))
     
     # Изменяем размер чтобы поместить в экран
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    
     img_width, img_height = img_data.size
     ratio = min(screen_width/img_width, screen_height/img_height)
     new_width = int(img_width * ratio)
@@ -532,7 +542,11 @@ root.bind('<Escape>', close)
 root.bind('q', close)
 root.bind('Q', close)
 root.after({duration}000, close)
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 '''
                 
                 # Загружаем и запускаем на удаленке
@@ -541,29 +555,26 @@ root.mainloop()
                     f.write(script)
                     local_path = f.name
                 
-                remote_path = f"~/.image_viewer.py"
+                remote_path = "/tmp/.image_viewer.py"
                 success, msg = pranks.client.upload_file(local_path, remote_path)
                 
                 if success:
-                    print("Загружаю и показываю картинку...")
+                    print("Проверяю PIL...")
                     # Проверяем, установлен ли PIL
-                    check_pil = 'python3 -c "from PIL import Image, ImageTk; print(True)" 2>/dev/null && echo "PIL_OK" || echo "PIL_MISSING"'
+                    check_pil = 'python3 -c "from PIL import Image, ImageTk; import requests" 2>&1'
                     pil_check_success, pil_result = pranks.client.execute_command(check_pil)
                     
-                    if "PIL_OK" in pil_result:
-                        # PIL установлен, запускаем основной скрипт
-                        pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
-                        time.sleep(0.5)
-                        pranks.client.execute_command(f"rm {remote_path}")
-                        print("✓ Картинка показана!")
-                    else:
-                        # PIL не установлен, пытаемся установить
-                        print("Устанавливаю PIL на удаленной машине...")
-                        pranks.client.execute_command("pip3 install Pillow >/dev/null 2>&1 || apt-get install -y python3-pil >/dev/null 2>&1")
-                        pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
-                        time.sleep(0.5)
-                        pranks.client.execute_command(f"rm {remote_path}")
-                        print("✓ Картинка показана!")
+                    if "ModuleNotFoundError" in pil_result or "No module named" in pil_result:
+                        print("Устанавливаю PIL и requests на удаленной машине...")
+                        pranks.client.execute_command("pip3 install Pillow requests 2>&1 || sudo apt-get install -y python3-pil python3-requests 2>&1")
+                    
+                    print("Запускаю показ картинки...")
+                    pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
+                    pranks.client.execute_command(f"chmod +x {remote_path}")
+                    pranks.client.execute_command(f"DISPLAY=:0 python3 {remote_path} 2>&1 &")
+                    time.sleep(1)
+                    pranks.client.execute_command(f"rm -f {remote_path}")
+                    print("✓ Картинка показана!")
                 else:
                     print(f"✗ Ошибка: {msg}")
                 
