@@ -93,26 +93,32 @@ class SSHPranksFiles:
                 print("Запускаю GUI на Windows через Task Scheduler...")
             
             elif remote_os in ["linux", "macos"]:
-                # Linux/macOS: используем nohup для надежного запуска
+                # Linux/macOS: используем правильный способ запуска GUI
                 self.client.execute_command(f"chmod +x {remote_path}")
-                cmd = f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &"
+                # Используем export DISPLAY и запускаем напрямую
+                cmd = f"export DISPLAY=:0 && python3 {remote_path} &"
                 print("Запускаю полноэкранное окно на Linux...")
             
             else:
                 # Fallback - пробуем Linux
                 self.client.execute_command(f"chmod +x {remote_path}")
-                cmd = f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &"
+                cmd = f"export DISPLAY=:0 && python3 {remote_path} &"
                 print("Запускаю (fallback режим)...")
             
             success, output = self.client.execute_command(cmd)
             
-            # Даем время на запуск
-            time.sleep(1)
+            # Даем больше времени на запуск
+            time.sleep(2)
             
-            # Удаляем временный файл
-            self.client.execute_command(f"rm -f {remote_path}")
+            # Проверяем, запустился ли процесс
+            check_success, check_output = self.client.execute_command("ps aux | grep python3 | grep -v grep")
             
-            print(f"✓ GUI запущено на удаленной машине ({remote_os})!")
+            if "python3" in check_output:
+                print(f"✓ GUI запущено на удаленной машине ({remote_os})!")
+            else:
+                print(f"⚠ Процесс запущен, но GUI может не отображаться")
+                print(f"Проверьте DISPLAY и X11 forwarding на удаленной машине")
+            
             return True
         
         finally:
@@ -329,14 +335,21 @@ subprocess.run(['powershell', '-Command', ps_script])
         else:
             # Linux версия с tkinter
             script = f"""#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import tkinter as tk
 import random
 import time
+import os
+
+# Устанавливаем DISPLAY если не установлен
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
 
 root = tk.Tk()
 root.attributes('-fullscreen', True)
 root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
 
 canvas = tk.Canvas(root, bg='black', highlightthickness=0)
 canvas.pack(fill='both', expand=True)
@@ -345,8 +358,8 @@ chars = '01'
 columns = []
 
 def init_columns():
-    width = root.winfo_width()
-    height = root.winfo_height()
+    width = root.winfo_screenwidth()
+    height = root.winfo_screenheight()
     col_width = 20
     num_cols = width // col_width
     
@@ -359,7 +372,7 @@ def init_columns():
 
 def update():
     canvas.delete('all')
-    height = root.winfo_height()
+    height = root.winfo_screenheight()
     
     for col in columns:
         for i in range(20):
@@ -386,7 +399,11 @@ root.bind('q', close)
 
 root.after({duration * 1000}, close)
 root.after(100, lambda: (init_columns(), update()))
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 """
         
         return self.upload_and_run_gui(script, "matrix.py")
