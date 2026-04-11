@@ -97,8 +97,7 @@ class HamsterPrank:
             print("3. Текстовые эффекты")
             print("4. Управление окнами")
             print("5. Запустить программу")
-            print("6. Показать Skull (ASCII-арт)")
-            print("7. Показать Anime (ASCII-арт)")
+            print("6. ASCII-арт")
             print("0. Назад")
             print()
             
@@ -118,14 +117,31 @@ class HamsterPrank:
                 cmd = input("Команда для запуска: ")
                 os.system(cmd)
             elif choice == '6':
-                self.show_ascii_art('skull.txt')
-            elif choice == '7':
-                self.show_ascii_art('anime.txt')
+                self.ascii_art_menu()
             elif choice == '0':
                 break
             
             if choice != '0' and choice == '5':
                 input("\nНажми Enter для продолжения...")
+    
+    def ascii_art_menu(self):
+        """Меню ASCII-арт"""
+        while True:
+            self.clear_screen()
+            print("=== ASCII-АРТ ===\n")
+            print("1. Skull")
+            print("2. Chill")
+            print("0. Назад")
+            print()
+            
+            choice = input("Выбери: ").strip()
+            
+            if choice == '1':
+                self.show_ascii_art('skull.txt')
+            elif choice == '2':
+                self.show_ascii_art('chill.txt')
+            elif choice == '0':
+                break
     
     def _launch_prank_with_tkinter_check(self, prank_type):
         """Запустить пранк с проверкой tkinter"""
@@ -268,8 +284,7 @@ class HamsterPrank:
             print("3. Текстовые эффекты")
             print("4. Управление окнами")
             print("5. Запустить программу")
-            print("6. Показать Skull (ASCII-арт)")
-            print("7. Показать Anime (ASCII-арт)")
+            print("6. ASCII-арт")
             print("0. Назад")
             print()
             
@@ -292,9 +307,26 @@ class HamsterPrank:
                     print(output)
                     input("\nНажми Enter...")
             elif choice == '6':
+                self.ssh_ascii_art_menu(pranks)
+            elif choice == '0':
+                break
+    
+    def ssh_ascii_art_menu(self, pranks):
+        """Меню ASCII-арт для SSH"""
+        while True:
+            self.clear_screen()
+            print("=== ASCII-АРТ (SSH) ===\n")
+            print("1. Skull")
+            print("2. Chill")
+            print("0. Назад")
+            print()
+            
+            choice = input("Выбери: ").strip()
+            
+            if choice == '1':
                 self.ssh_show_ascii_art(pranks, 'skull.txt')
-            elif choice == '7':
-                self.ssh_show_ascii_art(pranks, 'anime.txt')
+            elif choice == '2':
+                self.ssh_show_ascii_art(pranks, 'chill.txt')
             elif choice == '0':
                 break
     
@@ -446,30 +478,40 @@ class HamsterPrank:
                 
                 # Создаем скрипт для показа изображения
                 script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import tkinter as tk
 from PIL import Image, ImageTk
 import requests
 from io import BytesIO
-import tempfile
 import os
 
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
+
 root = tk.Tk()
+root.withdraw()
 root.title("Полноэкранная картинка")
 root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f'{{screen_width}}x{{screen_height}}+0+0')
+
+root.deiconify()
+root.focus_force()
 
 try:
     # Загружаем изображение по URL
-    response = requests.get("{image_url}")
+    response = requests.get("{image_url}", timeout=10)
     response.raise_for_status()
     
     # Открываем изображение
     img_data = Image.open(BytesIO(response.content))
     
     # Изменяем размер чтобы поместить в экран
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    
     img_width, img_height = img_data.size
     ratio = min(screen_width/img_width, screen_height/img_height)
     new_width = int(img_width * ratio)
@@ -500,7 +542,11 @@ root.bind('<Escape>', close)
 root.bind('q', close)
 root.bind('Q', close)
 root.after({duration}000, close)
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 '''
                 
                 # Загружаем и запускаем на удаленке
@@ -509,29 +555,40 @@ root.mainloop()
                     f.write(script)
                     local_path = f.name
                 
-                remote_path = f"~/.image_viewer.py"
+                remote_path = "/tmp/.image_viewer.py"
                 success, msg = pranks.client.upload_file(local_path, remote_path)
                 
                 if success:
-                    print("Загружаю и показываю картинку...")
+                    print("Проверяю PIL...")
                     # Проверяем, установлен ли PIL
-                    check_pil = 'python3 -c "from PIL import Image, ImageTk; print(True)" 2>/dev/null && echo "PIL_OK" || echo "PIL_MISSING"'
+                    check_pil = 'python3 -c "from PIL import Image, ImageTk; import requests" 2>&1'
                     pil_check_success, pil_result = pranks.client.execute_command(check_pil)
                     
-                    if "PIL_OK" in pil_result:
-                        # PIL установлен, запускаем основной скрипт
-                        pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
-                        time.sleep(0.5)
-                        pranks.client.execute_command(f"rm {remote_path}")
-                        print("✓ Картинка показана!")
+                    if "ModuleNotFoundError" in pil_result or "No module named" in pil_result:
+                        print("Устанавливаю PIL и requests на удаленной машине...")
+                        pranks.client.execute_command("pip3 install Pillow requests 2>&1 || sudo apt-get install -y python3-pil python3-requests 2>&1")
+                    
+                    print("Запускаю показ картинки...")
+                    pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
+                    pranks.client.execute_command(f"chmod +x {remote_path}")
+                    
+                    # Запускаем с выводом ошибок для отладки
+                    exec_success, exec_out = pranks.client.execute_command(f"DISPLAY=:0 python3 {remote_path} 2>&1 &")
+                    
+                    if exec_out.strip():
+                        print(f"Вывод: {exec_out.strip()}")
+                    
+                    time.sleep(2)
+                    
+                    # Проверяем процесс
+                    ps_success, ps_out = pranks.client.execute_command("ps aux | grep image_viewer | grep -v grep")
+                    if "python3" in ps_out:
+                        print("✓ Процесс запущен!")
                     else:
-                        # PIL не установлен, пытаемся установить
-                        print("Устанавливаю PIL на удаленной машине...")
-                        pranks.client.execute_command("pip3 install Pillow >/dev/null 2>&1 || apt-get install -y python3-pil >/dev/null 2>&1")
-                        pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
-                        time.sleep(0.5)
-                        pranks.client.execute_command(f"rm {remote_path}")
-                        print("✓ Картинка показана!")
+                        print("⚠ Процесс не найден - возможно картинка уже показана или ошибка загрузки")
+                    
+                    pranks.client.execute_command(f"rm -f {remote_path}")
+                    print("✓ Картинка показана!")
                 else:
                     print(f"✗ Ошибка: {msg}")
                 
@@ -798,22 +855,41 @@ root.mainloop()
 import tkinter as tk
 import random
 import time
+import os
+
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
 
 root = tk.Tk()
+root.withdraw()
 root.title("Тряска")
 root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f'{{screen_width}}x{{screen_height}}+0+0')
+
+root.deiconify()
+root.focus_force()
 
 text_widget = tk.Text(root, bg='black', fg='white', font=('Courier', 24), wrap='word')
 text_widget.pack(expand=True, fill='both', padx=100, pady=200)
 text_widget.insert('1.0', '{text}')
 text_widget.tag_add('shake', '1.0', 'end')
+text_widget.config(state='disabled')
+
+shake_count = [0]
 
 def shake():
-    dx = random.randint(-5, 5)
-    dy = random.randint(-5, 5)
-    root.geometry(f"+{root.winfo_x() + dx}+{root.winfo_y() + dy}")
-    root.after(50, shake)
+    if shake_count[0] < 100:
+        dx = random.randint(-5, 5)
+        dy = random.randint(-5, 5)
+        text_widget.place(x=100+dx, y=200+dy)
+        shake_count[0] += 1
+        root.after(50, shake)
 
 shake()
 
@@ -823,26 +899,46 @@ def close(event=None):
 root.bind('<Escape>', close)
 root.bind('q', close)
 root.after(5000, close)
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 '''
                 elif choice == '8':  # Спам
                     script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import random
+import os
+
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
 
 root = tk.Tk()
+root.withdraw()
 root.title("Спам")
 root.attributes('-fullscreen', True)
+root.attributes('-topmost', True)
 root.configure(bg='black')
+root.overrideredirect(True)
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f'{{screen_width}}x{{screen_height}}+0+0')
+
+root.deiconify()
+root.focus_force()
 
 canvas = tk.Canvas(root, bg='black', highlightthickness=0)
 canvas.pack(fill='both', expand=True)
 
-for _ in range(20):
-    x = random.randint(50, root.winfo_width()-50)
-    y = random.randint(50, root.winfo_height()-50)
-    canvas.create_text(x, y, text='{text}', fill='white', font=('Courier', random.randint(10, 30)))
+root.update()
+
+for _ in range(50):
+    x = random.randint(50, screen_width-50)
+    y = random.randint(50, screen_height-50)
+    canvas.create_text(x, y, text='{text}', fill='white', font=('Courier', random.randint(10, 50)))
 
 def close(event=None):
     root.destroy()
@@ -850,7 +946,11 @@ def close(event=None):
 root.bind('<Escape>', close)
 root.bind('q', close)
 root.after(5000, close)
-root.mainloop()
+
+try:
+    root.mainloop()
+except:
+    pass
 '''
 
                 # Загружаем и запускаем скрипт на удаленке
@@ -1138,7 +1238,7 @@ root.mainloop()
             if 'skull' in filename.lower():
                 color = 'white'
                 bg_color = 'black'
-            elif 'anime' in filename.lower():
+            elif 'chill' in filename.lower():
                 color = 'orange'
                 bg_color = 'black'
             else:
