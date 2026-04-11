@@ -784,7 +784,7 @@ def generate_fill_screen_html(text, duration=5):
 </body>
 </html>'''
 
-def generate_ascii_art_html(ascii_art, duration=5):
+def generate_ascii_art_html(ascii_art, duration=7, color="white"):
     """Генерация HTML для ASCII-арта"""
     return f'''<!DOCTYPE html>
 <html>
@@ -797,7 +797,7 @@ def generate_ascii_art_html(ascii_art, duration=5):
             padding: 20px;
             overflow: auto;
             background: black;
-            color: white;
+            color: {color};
             font-family: monospace;
             font-size: 14px;
             line-height: 1;
@@ -821,6 +821,74 @@ def generate_ascii_art_html(ascii_art, duration=5):
             if (e.key === 'Escape') window.close();
         }});
         document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_minimize_windows_html(duration=5):
+    """Генерация HTML для команды свертывания окон (скрипт на JS)"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Minimize Windows Command</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+        }}
+    </style>
+</head>
+<body>
+    <div>Executing minimize windows command...</div>
+    <script>
+        // Выполнение команды через встроенную интеграцию с системой
+        // (в реальности это будет выполнено на сервере)
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+    </script>
+</body>
+</html>'''
+
+def generate_window_dance_html(cycles=5, duration=5):
+    """Генерация HTML для танца окон (скрипт на JS)"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Window Dance Command</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: yellow;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+        }}
+    </style>
+</head>
+<body>
+    <div>Executing window dance command ({{cycles}} cycles)...</div>
+    <script>
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
     </script>
 </body>
 </html>'''

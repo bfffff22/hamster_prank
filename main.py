@@ -458,10 +458,12 @@ class HamsterPrank:
             self.clear_screen()
             print("=== HTML УПРАВЛЕНИЕ ОКНАМИ (SSH) ===\n")
             print("1. Свернуть все окна (команда)")
-            print("2. Открыть CD привод (команда)")
-            print("3. Спам CD приводом (команда)")
-            print("4. Озвучить текст (через браузер)")
-            print("5. Блокировка экрана (команда)")
+            print("2. Развернуть все окна (команда)")
+            print("3. Танец окон (команда)")
+            print("4. Открыть CD привод (команда)")
+            print("5. Спам CD приводом (команда)")
+            print("6. Озвучить текст (через браузер)")
+            print("7. Блокировка экрана (команда)")
             print("0. Назад")
             print()
             
@@ -475,11 +477,28 @@ class HamsterPrank:
                 print("✓ Окна свернуты" if success else f"Результат: {output}")
                 input("\nНажми Enter...")
             elif choice == '2':
+                print("\nРазворачиваю окна на удаленке...")
+                success, output = pranks.client.execute_command("DISPLAY=:0 wmctrl -k off 2>/dev/null || DISPLAY=:0 xdotool key super+d 2>/dev/null")
+                print("✓ Окна развернуты" if success else f"Результат: {output}")
+                input("\nНажми Enter...")
+            elif choice == '3':
+                cycles = input("Количество циклов (по умолчанию 5): ").strip()
+                cycles = int(cycles) if cycles.isdigit() else 5
+                print(f"\nЗапускаю танец окон ({cycles} циклов) на удаленке...")
+                for i in range(cycles):
+                    print(f"  Цикл {i+1}/{cycles}")
+                    pranks.minimize_windows()
+                    time.sleep(0.5)
+                    pranks.client.execute_command("DISPLAY=:0 wmctrl -k off 2>/dev/null")
+                    time.sleep(0.5)
+                print("✓ Танец завершен!")
+                input("\nНажми Enter...")
+            elif choice == '4':
                 print("\nОткрываю CD привод на удаленке...")
                 success, output = pranks.client.execute_command('eject')
                 print(f"{'✓ CD открыт' if success else f'✗ Ошибка: {output}'}")
                 input("\nНажми Enter...")
-            elif choice == '3':
+            elif choice == '5':
                 count = input("Количество (по умолчанию 5): ").strip()
                 count = int(count) if count.isdigit() else 5
                 print(f"\nОткрываю CD привод {count} раз на удаленке...")
@@ -491,7 +510,7 @@ class HamsterPrank:
                     time.sleep(0.5)
                 print("✓ Готово!")
                 input("\nНажми Enter...")
-            elif choice == '4':
+            elif choice == '6':
                 text = input("Текст для озвучки: ").strip()
                 if not text:
                     text = "ПРАНК!"
@@ -501,7 +520,7 @@ class HamsterPrank:
                 success, output = pranks.client.execute_command(cmd)
                 print("✓ Сообщение озвучено!" if success else f"✗ Ошибка: {output}")
                 input("\nНажми Enter...")
-            elif choice == '5':
+            elif choice == '7':
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
                     print("\nБлокирую экран на удаленке...")
@@ -831,11 +850,75 @@ root.mainloop()
                 
                 # Некоторые эффекты уже реализованы в SSHPranksFiles
                 if choice == '3':  # Волна
+                    # Проверяем tkinter, если нет - предлагаем HTML
+                    host_key = f"{client.host}:{client.port}"
+                    remote_has_tkinter = checker.check_remote(client, host_key)
+                    
+                    if not remote_has_tkinter:
+                        print("\n✗ tkinter не обнаружен на удаленной машине!")
+                        print("\nВыберите действие:")
+                        print("1. Установить tkinter на удаленной машине")
+                        print("2. Запустить HTML версию (в браузере)")
+                        print("0. Отмена")
+                        print()
+                        
+                        action = input("Ваш выбор: ").strip()
+                        
+                        if action == '1':
+                            print("\nУстанавливаю tkinter...")
+                            pranks.client.execute_command("sudo apt-get install -y python3-tk 2>/dev/null || sudo dnf install -y python3-tkinter 2>/dev/null")
+                            checker.remote_available.pop(host_key, None)
+                            
+                            if not checker.check_remote(client, host_key):
+                                print("✗ Не удалось установить tkinter")
+                                input("\nНажми Enter...")
+                                continue
+                            print("✓ tkinter установлен!")
+                        elif action == '2':
+                            # Запускаем HTML версию
+                            print(f"Запускаю волну на удаленке...")
+                            self._ssh_launch_text_effect_html(pranks, choice, text)
+                            continue
+                        else:
+                            continue
+                    
                     print(f"Запускаю волну на удаленке...")
                     pranks.wave_text(text)
                     input("\nНажми Enter...")
                     continue  # пропускаем общий код загрузки скрипта
                 elif choice == '5':  # Радужный текст
+                    # Проверяем tkinter, если нет - предлагаем HTML
+                    host_key = f"{client.host}:{client.port}"
+                    remote_has_tkinter = checker.check_remote(client, host_key)
+                    
+                    if not remote_has_tkinter:
+                        print("\n✗ tkinter не обнаружен на удаленной машине!")
+                        print("\nВыберите действие:")
+                        print("1. Установить tkinter на удаленной машине")
+                        print("2. Запустить HTML версию (в браузере)")
+                        print("0. Отмена")
+                        print()
+                        
+                        action = input("Ваш выбор: ").strip()
+                        
+                        if action == '1':
+                            print("\nУстанавливаю tkinter...")
+                            pranks.client.execute_command("sudo apt-get install -y python3-tk 2>/dev/null || sudo dnf install -y python3-tkinter 2>/dev/null")
+                            checker.remote_available.pop(host_key, None)
+                            
+                            if not checker.check_remote(client, host_key):
+                                print("✗ Не удалось установить tkinter")
+                                input("\nНажми Enter...")
+                                continue
+                            print("✓ tkinter установлен!")
+                        elif action == '2':
+                            # Запускаем HTML версию
+                            print(f"Запускаю радугу на удаленке...")
+                            self._ssh_launch_text_effect_html(pranks, choice, text)
+                            continue
+                        else:
+                            continue
+                    
                     print(f"Запускаю радугу на удаленке...")
                     pranks.rainbow_text(text)
                     input("\nНажми Enter...")
@@ -1453,8 +1536,14 @@ except:
                     # Запускаем HTML версию
                     from core.html_pranks import generate_ascii_art_html
                     
+                    # Определяем цвет в зависимости от файла
+                    color = 'white'
+                    duration = 7
+                    if 'chill' in filename.lower():
+                        color = 'orange'
+                    
                     print("\nПоказываю ASCII-арт через HTML в браузере на удаленке...")
-                    html_content = generate_ascii_art_html(art, 10)
+                    html_content = generate_ascii_art_html(art, duration, color)
                     
                     # Создаем временный HTML файл
                     import tempfile
