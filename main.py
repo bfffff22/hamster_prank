@@ -1342,6 +1342,73 @@ except:
             with open(art_path, 'r', encoding='utf-8') as f:
                 art = f.read()
             
+            # Проверяем наличие tkinter на удаленной машине
+            from core.tkinter_check import checker
+            host_key = f"{pranks.client.host}:{pranks.client.port}"
+            remote_has_tkinter = checker.check_remote(pranks.client, host_key)
+            
+            if not remote_has_tkinter:
+                print("\n✗ tkinter не обнаружен на удаленной машине!")
+                print("\nВыберите действие:")
+                print("1. Установить tkinter на удаленной машине")
+                print("2. Запустить HTML версию (в браузере)")
+                print("0. Отмена")
+                print()
+                
+                choice = input("Ваш выбор: ").strip()
+                
+                if choice == '1':
+                    print("\nУстанавливаю tkinter...")
+                    pranks.client.execute_command("sudo apt-get install -y python3-tk 2>/dev/null || sudo dnf install -y python3-tkinter 2>/dev/null")
+                    checker.remote_available.pop(host_key, None)  # Сбрасываем кеш
+                    
+                    # Проверяем снова
+                    if not checker.check_remote(pranks.client, host_key):
+                        print("✗ Не удалось установить tkinter")
+                        input("\nНажми Enter...")
+                        return
+                    print("✓ tkinter установлен!")
+                elif choice == '2':
+                    # Запускаем HTML версию
+                    from core.html_pranks import generate_ascii_art_html
+                    
+                    print("\nПоказываю ASCII-арт через HTML в браузере на удаленке...")
+                    html_content = generate_ascii_art_html(art, 10)
+                    
+                    # Создаем временный HTML файл
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                        f.write(html_content)
+                        local_path = f.name
+                    
+                    # Загружаем на удаленку
+                    remote_path = f"/tmp/.ascii_art.html"
+                    success, msg = pranks.client.upload_file(local_path, remote_path)
+                    
+                    if success:
+                        # Открываем в браузере в полноэкранном режиме
+                        pranks.client.execute_command(f"DISPLAY=:0 firefox --kiosk file://{remote_path} 2>&1 || DISPLAY=:0 chromium --kiosk file://{remote_path} 2>&1 &")
+                        
+                        time.sleep(2)
+                        
+                        # Проверяем что браузер запустился
+                        ps_success, ps_out = pranks.client.execute_command("ps aux | grep -E 'firefox|chromium' | grep -v grep")
+                        if ps_out.strip():
+                            print("✓ ASCII-арт показан в браузере!")
+                            print("ASCII-арт будет показан 10 секунд")
+                        else:
+                            print("⚠ Браузер не найден")
+                            print("Установите firefox или chromium на удаленной машине")
+                    else:
+                        print(f"✗ Ошибка загрузки: {msg}")
+                    
+                    import os
+                    os.unlink(local_path)
+                    input("\nНажми Enter...")
+                    return
+                else:
+                    return
+            
             # Определяем цвет в зависимости от файла
             if 'skull' in filename.lower():
                 color = 'white'
@@ -1415,7 +1482,7 @@ root.bind('Q', close)
 root.after(5000, close)
 root.mainloop()
 '''
-            
+
             # Загружаем и запускаем на удаленке
             import tempfile
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:

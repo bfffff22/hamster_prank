@@ -373,3 +373,455 @@ def generate_rainbow_text_html(text, duration=5):
     </script>
 </body>
 </html>'''
+
+def generate_fullscreen_text_html(text, duration=5):
+    """Генерация HTML для полноэкранного текста"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Fullscreen Text</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: red;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }}
+        #text {{
+            font-family: Arial, sans-serif;
+            font-size: 80px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div id="text">{text}</div>
+    <script>
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_spam_text_html(text, duration=5):
+    """Генерация HTML для спама текстом"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Text Spam</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }}
+        .text {{
+            position: absolute;
+            font-family: monospace;
+            color: white;
+            user-select: none;
+        }}
+    </style>
+</head>
+<body>
+    <script>
+        for (let i = 0; i < 50; i++) {{
+            const div = document.createElement('div');
+            div.className = 'text';
+            div.textContent = '{text}';
+            div.style.fontSize = (10 + Math.random() * 40) + 'px';
+            div.style.left = Math.random() * window.innerWidth + 'px';
+            div.style.top = Math.random() * window.innerHeight + 'px';
+            document.body.appendChild(div);
+        }}
+        
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_image_html(image_url, duration=5):
+    """Генерация HTML для отображения изображения"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Image Display</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }}
+        img {{
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }}
+    </style>
+</head>
+<body>
+    <img src="{image_url}" alt="Prank Image">
+    <script>
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_spam_windows_html(text, count=5, duration=3):
+    """Генерация HTML для спама окнами"""
+    windows = []
+    for i in range(count):
+        window_html = f'''
+        <div style="
+            position: fixed;
+            top: {50 + i * 20}px;
+            left: {50 + i * 30}px;
+            width: 300px;
+            height: 200px;
+            background: red;
+            border: 3px solid yellow;
+            z-index: {10000 + i};
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            transform: rotate({i * 5 - 10}deg);
+        ">
+            {text} #{i+1}
+        </div>
+        '''
+        windows.append(window_html)
+    
+    windows_html = ''.join(windows)
+    
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Spam Windows</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }}
+    </style>
+</head>
+<body>
+    {windows_html}
+    <script>
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_typewriter_html(text, duration=5):
+    """Генерация HTML для эффекта печатной машинки"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Typewriter Effect</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }}
+        #typewriter {{
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            color: green;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 2px solid green;
+            animation: typing {len(text) * 0.1}s steps({len(text)}, end), blink-caret 0.75s step-end infinite;
+        }}
+        @keyframes typing {{
+            from {{ width: 0 }}
+            to {{ width: 100% }}
+        }}
+        @keyframes blink-caret {{
+            from, to {{ border-color: transparent }}
+            50% {{ border-color: green }}
+        }}
+    </style>
+</head>
+<body>
+    <div id="typewriter">{text}</div>
+    <script>
+        setTimeout(() => window.close(), {(duration + 2) * 1000}); // Additional time after typing
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_zoom_html(text, duration=5):
+    """Генерация HTML для эффекта приближения"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Zoom Effect</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }}
+        #zoom {{
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: yellow;
+            transform-origin: center;
+            animation: zoom {duration}s ease-out forwards;
+        }}
+        @keyframes zoom {{
+            0% {{ transform: scale(0.1); opacity: 0; }}
+            100% {{ transform: scale(1); opacity: 1; }}
+        }}
+    </style>
+</head>
+<body>
+    <div id="zoom">{text}</div>
+    <script>
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_shake_html(text, duration=5):
+    """Генерация HTML для эффекта тряски"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Shake Effect</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }}
+        #shake {{
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: white;
+            animation: shake {duration}s linear;
+        }}
+        @keyframes shake {{
+            0%, 100% {{ transform: translate(0, 0); }}
+            10%, 30%, 50%, 70%, 90% {{ transform: translate(-5px, -5px); }}
+            20%, 40%, 60%, 80% {{ transform: translate(5px, 5px); }}
+        }}
+    </style>
+</head>
+<body>
+    <div id="shake">{text}</div>
+    <script>
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_frame_text_html(text, duration=5):
+    """Генерация HTML для текста в рамке"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Text in Frame</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: red;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }}
+        #frame {{
+            padding: 50px;
+            background: black;
+            border: 5px solid white;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        }}
+    </style>
+</head>
+<body>
+    <div id="frame">{text}</div>
+    <script>
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_fill_screen_html(text, duration=5):
+    """Генерация HTML для заполнения экрана текстом"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Fill Screen</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }}
+        .text {{
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            color: white;
+            user-select: none;
+            opacity: 0.7;
+        }}
+    </style>
+</head>
+<body>
+    <script>
+        const text = '{text}';
+        const rows = Math.floor(window.innerHeight / 30);
+        const cols = Math.floor(window.innerWidth / 12);
+        
+        for (let row = 0; row < rows; row++) {{
+            for (let col = 0; col < cols; col++) {{
+                const div = document.createElement('div');
+                div.className = 'text';
+                div.textContent = text;
+                div.style.fontSize = (10 + Math.random() * 20) + 'px';
+                div.style.left = (col * 12) + 'em';
+                div.style.top = (row * 3) + 'em';
+                
+                const r = Math.floor(Math.random() * 100);
+                const g = Math.floor(150 + Math.random() * 105);
+                const b = Math.floor(Math.random() * 100);
+                div.style.color = `rgb(${{r}},${{g}},${{b}})`;
+                
+                document.body.appendChild(div);
+            }}
+        }}
+        
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
+def generate_ascii_art_html(ascii_art, duration=5):
+    """Генерация HTML для ASCII-арта"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ASCII Art</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 20px;
+            overflow: auto;
+            background: black;
+            color: white;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }}
+        #art {{
+            white-space: pre;
+            text-align: center;
+            font-family: monospace;
+        }}
+    </style>
+</head>
+<body>
+    <pre id="art">{ascii_art}</pre>
+    <script>
+        setTimeout(() => window.close(), {duration * 1000});
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape') window.close();
+        }});
+        document.documentElement.requestFullscreen().catch(() => {{}});
+    </script>
+</body>
+</html>'''
+
