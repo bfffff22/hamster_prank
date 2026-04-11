@@ -448,8 +448,69 @@ class HamsterPrank:
         if prank_type == 'fullscreen':
             self.ssh_fullscreen_pranks_html(pranks)
         elif prank_type == 'window_control':
-            print("HTML версия для управления окнами пока не реализована")
-            input("\nНажми Enter...")
+            self.ssh_window_control_html(pranks)
+    
+    def ssh_window_control_html(self, pranks):
+        """HTML версия управления окнами"""
+        # Вместо управления окнами через HTML, можно использовать команды через браузер
+        # Но для большинства функций оконного управления лучше использовать стандартные команды
+        while True:
+            self.clear_screen()
+            print("=== HTML УПРАВЛЕНИЕ ОКНАМИ (SSH) ===\n")
+            print("1. Свернуть все окна (команда)")
+            print("2. Открыть CD привод (команда)")
+            print("3. Спам CD приводом (команда)")
+            print("4. Озвучить текст (через браузер)")
+            print("5. Блокировка экрана (команда)")
+            print("0. Назад")
+            print()
+            
+            choice = input("Выбери: ").strip()
+            
+            if choice == '0':
+                break
+            elif choice == '1':
+                print("\nСворачиваю окна на удаленке...")
+                success, output = pranks.client.execute_command("DISPLAY=:0 wmctrl -k on 2>/dev/null || DISPLAY=:0 xdotool key super+d 2>/dev/null")
+                print("✓ Окна свернуты" if success else f"Результат: {output}")
+                input("\nНажми Enter...")
+            elif choice == '2':
+                print("\nОткрываю CD привод на удаленке...")
+                success, output = pranks.client.execute_command('eject')
+                print(f"{'✓ CD открыт' if success else f'✗ Ошибка: {output}'}")
+                input("\nНажми Enter...")
+            elif choice == '3':
+                count = input("Количество (по умолчанию 5): ").strip()
+                count = int(count) if count.isdigit() else 5
+                print(f"\nОткрываю CD привод {count} раз на удаленке...")
+                for i in range(count):
+                    print(f"  [{i+1}] Открываю...")
+                    pranks.client.execute_command('eject')
+                    time.sleep(2)
+                    pranks.client.execute_command('eject -t')  # закрыть
+                    time.sleep(0.5)
+                print("✓ Готово!")
+                input("\nНажми Enter...")
+            elif choice == '4':
+                text = input("Текст для озвучки: ").strip()
+                if not text:
+                    text = "ПРАНК!"
+                print("\nОзвучиваю на удаленке...")
+                # Используем espeak если доступен
+                cmd = f'espeak "{text}" 2>/dev/null || spd-say "{text}" 2>/dev/null || echo "{text}"'
+                success, output = pranks.client.execute_command(cmd)
+                print("✓ Сообщение озвучено!" if success else f"✗ Ошибка: {output}")
+                input("\nНажми Enter...")
+            elif choice == '5':
+                confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
+                if confirm == 'y':
+                    print("\nБлокирую экран на удаленке...")
+                    success, output = pranks.client.execute_command('gnome-screensaver-command --lock 2>/dev/null || xscreensaver-command -lock 2>/dev/null || dm-tool lock 2>/dev/null')
+                    print("✓ Экран заблокирован!" if success else f"✗ Ошибка: {output}")
+                input("\nНажми Enter...")
+            else:
+                print("Неверный выбор!")
+                input("\nНажми Enter...")
     
     def ssh_fullscreen_pranks_html(self, pranks):
         """Полноэкранные HTML пранки через SSH"""
@@ -735,7 +796,7 @@ root.mainloop()
                         print("\n✗ tkinter не обнаружен на удаленной машине!")
                         print("\nВыберите действие:")
                         print("1. Установить tkinter на удаленной машине")
-                        print("2. Запустить альтернативный вариант (консоль)")
+                        print("2. Запустить HTML версию (в браузере)")
                         print("0. Отмена")
                         print()
                         
@@ -768,9 +829,21 @@ root.mainloop()
                 
                 print("\nЗапускаю эффект на удаленке...")
                 
-                # Создаем соответствующий GUI скрипт для каждого типа
-                if choice == '1':  # Текст в рамке
-                    script = f'''#!/usr/bin/env python3
+                # Некоторые эффекты уже реализованы в SSHPranksFiles
+                if choice == '3':  # Волна
+                    print(f"Запускаю волну на удаленке...")
+                    pranks.wave_text(text)
+                    input("\nНажми Enter...")
+                    continue  # пропускаем общий код загрузки скрипта
+                elif choice == '5':  # Радужный текст
+                    print(f"Запускаю радугу на удаленке...")
+                    pranks.rainbow_text(text)
+                    input("\nНажми Enter...")
+                    continue  # пропускаем общий код загрузки скрипта
+                else:
+                    # Создаем соответствующий GUI скрипт для остальных типов
+                    if choice == '1':  # Текст в рамке
+                        script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import tkinter.font as tkFont
@@ -794,8 +867,8 @@ root.bind('q', close)
 root.after(5000, close)
 root.mainloop()
 '''
-                elif choice == '2':  # Заполнить экран текстом
-                    script = f'''#!/usr/bin/env python3
+                    elif choice == '2':  # Заполнить экран текстом
+                        script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import tkinter.font as tkFont
@@ -829,13 +902,8 @@ root.bind('q', close)
 root.after(5000, close)
 root.mainloop()
 '''
-                elif choice == '3':  # Волна
-                    print(f"Запускаю волну на удаленке...")
-                    pranks.wave_text(text)
-                    input("\nНажми Enter...")
-                    continue  # пропускаем общий код загрузки скрипта
-                elif choice == '4':  # Печатная машинка
-                    script = f'''#!/usr/bin/env python3
+                    elif choice == '4':  # Печатная машинка
+                        script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import time
@@ -867,13 +935,8 @@ root.bind('q', close)
 root.after(5000, close)
 root.mainloop()
 '''
-                elif choice == '5':  # Радужный текст
-                    print(f"Запускаю радугу на удаленке...")
-                    pranks.rainbow_text(text)
-                    input("\nНажми Enter...")
-                    continue  # пропускаем общий код загрузки скрипта
-                elif choice == '6':  # Приближение
-                    script = f'''#!/usr/bin/env python3
+                    elif choice == '6':  # Приближение
+                        script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import math
@@ -907,8 +970,8 @@ root.bind('q', close)
 root.after(5000, close)
 root.mainloop()
 '''
-                elif choice == '7':  # Тряска
-                    script = f'''#!/usr/bin/env python3
+                    elif choice == '7':  # Тряска
+                        script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import random
@@ -963,8 +1026,8 @@ try:
 except:
     pass
 '''
-                elif choice == '8':  # Спам
-                    script = f'''#!/usr/bin/env python3
+                    elif choice == '8':  # Спам
+                        script = f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import tkinter as tk
 import random
@@ -1039,25 +1102,43 @@ except:
     
     def _ssh_launch_text_effect_html(self, pranks, effect_choice, text):
         """Запустить HTML версию текстового эффекта на удаленной машине"""
-        from core.html_pranks import generate_wave_text_html, generate_rainbow_text_html
+        from core.html_pranks import (generate_wave_text_html, generate_rainbow_text_html,
+                                      generate_typewriter_html, generate_zoom_html,
+                                      generate_shake_html, generate_frame_text_html,
+                                      generate_fill_screen_html)
         
         duration = 5
         html_content = None
         effect_name = ""
         
-        if effect_choice in ['1', '2', '6', '7', '8']:
-            # Для этих эффектов используем волну или радугу
+        if effect_choice == '1':  # Текст в рамке
+            html_content = generate_frame_text_html(text, duration)
+            effect_name = "frame"
+        elif effect_choice == '2':  # Заполнить экран текстом
+            html_content = generate_fill_screen_html(text, duration)
+            effect_name = "fill"
+        elif effect_choice == '3':  # Волна
             html_content = generate_wave_text_html(text, duration)
             effect_name = "wave"
-        elif effect_choice == '3':
-            html_content = generate_wave_text_html(text, duration)
-            effect_name = "wave"
-        elif effect_choice == '4':
-            html_content = generate_wave_text_html(text, duration)
+        elif effect_choice == '4':  # Печатная машинка
+            html_content = generate_typewriter_html(text, duration)
             effect_name = "typewriter"
-        elif effect_choice == '5':
+        elif effect_choice == '5':  # Радужный текст
             html_content = generate_rainbow_text_html(text, duration)
             effect_name = "rainbow"
+        elif effect_choice == '6':  # Приближение
+            html_content = generate_zoom_html(text, duration)
+            effect_name = "zoom"
+        elif effect_choice == '7':  # Тряска
+            html_content = generate_shake_html(text, duration)
+            effect_name = "shake"
+        elif effect_choice == '8':  # Спам
+            html_content = generate_fill_screen_html(text, duration)
+            effect_name = "spam"
+        else:
+            # Для остальных случаев используем волну как fallback
+            html_content = generate_wave_text_html(text, duration)
+            effect_name = "wave"
         
         if html_content:
             print(f"\nЗапускаю {effect_name} в браузере на удаленке...")
@@ -1491,17 +1572,21 @@ root.mainloop()
             
             remote_path = f"~/.ascii_art.py"
             print(f"Загружаю {filename} на удаленку...")
-            success, msg = pranks.client.upload_file(local_path, remote_path)
-            
-            if success:
-                print("Показываю ASCII-арт в полноэкранном окне на удаленке...")
-                # Запускаем в фоне с DISPLAY
-                pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
-                time.sleep(1)
-                pranks.client.execute_command(f"rm {remote_path}")
-                print("✓ ASCII-арт показан на удаленке!")
-            else:
-                print(f"Ошибка: {msg}")
+                success, msg = pranks.client.upload_file(local_path, remote_path)
+                
+                if success:
+                    print("Проверяю X11 доступ...")
+                    # Настраиваем X11 permissions
+                    pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || xhost +SI:localuser=$(whoami) 2>/dev/null || true")
+                    
+                    print("Показываю ASCII-арт в полноэкранном окне на удаленке...")
+                    # Запускаем в фоне с DISPLAY
+                    pranks.client.execute_command(f"DISPLAY=:0 timeout 10 python3 {remote_path} >/dev/null 2>&1 &")
+                    time.sleep(2)  # Увеличиваем задержку
+                    pranks.client.execute_command(f"rm {remote_path}")
+                    print("✓ ASCII-арт показан на удаленке!")
+                else:
+                    print(f"Ошибка: {msg}")
             
             import os
             os.unlink(local_path)

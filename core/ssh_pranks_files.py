@@ -358,10 +358,11 @@ root.attributes('-topmost', True)
 root.configure(bg='black')
 root.overrideredirect(True)
 
-# Получаем размеры экрана и устанавливаем геометрию
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
-root.geometry(f'{screen_width}x{screen_height}+0+0')
+            # Получаем размеры экрана и устанавливаем геометрию
+            root.update()  # Обновляем чтобы получить размеры
+            screen_width = root.winfo_screenwidth()
+            screen_height = root.winfo_screenheight()
+            root.geometry(f'{screen_width}x{screen_height}+0+0')
 
 root.deiconify()  # Показываем окно после настройки
 root.focus_force()  # Принудительно получаем фокус
@@ -413,8 +414,8 @@ def close(event=None):
 root.bind('<Escape>', close)
 root.bind('q', close)
 
-root.after({duration * 1000}, close)
-root.after(100, lambda: (init_columns(), update()))
+                root.after({duration * 1000}, close)
+                root.after(100, lambda: (root.update(), init_columns(), update()))
 
 try:
     root.mainloop()
@@ -932,6 +933,7 @@ root.configure(bg='black')
 root.overrideredirect(True)
 
 # Получаем размеры экрана и устанавливаем геометрию
+root.update()  # Обновляем чтобы получить размеры
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 root.geometry(f'{{screen_width}}x{{screen_height}}+0+0')
@@ -999,6 +1001,58 @@ except:
             time.sleep(1)
             self.client.execute_command(f"rm -f {remote_path}")
             print("✓ Rainbow text показан")
+        else:
+            print(f"✗ Ошибка: {msg}")
+        
+        import os
+        os.unlink(local_path)
+
+    def screen_shake(self, duration=5):
+        """Тряска экрана - эффект движения через мышь (простой способ)"""
+        script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import subprocess
+import time
+import random
+import os
+
+# Устанавливаем DISPLAY
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'
+
+start_time = time.time()
+while time.time() - start_time < {duration}:
+    # Двигаем мышь в случайное место и обратно
+    x_move = random.randint(-10, 10)
+    y_move = random.randint(-10, 10)
+    
+    try:
+        # Двигаем мышь
+        subprocess.run(['xdotool', 'mousemove_relative', f'-- {x_move}', f'{y_move}'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(0.05)
+        # Возвращаем мышь обратно
+        subprocess.run(['xdotool', 'mousemove_relative', f'-- {-x_move}', f'{-y_move}'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except:
+        pass
+    
+    time.sleep(0.05)
+
+print("Screen shake effect completed.")
+'''
+        
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+            f.write(script)
+            local_path = f.name
+        
+        remote_path = "/tmp/.screen_shake.py"
+        success, msg = self.client.upload_file(local_path, remote_path)
+        
+        if success:
+            self.client.execute_command(f"chmod +x {remote_path}")
+            result = self.client.execute_command(f"DISPLAY=:0 python3 {remote_path}")
+            self.client.execute_command(f"rm -f {remote_path}")
+            print("✓ Screen shake effect completed")
         else:
             print(f"✗ Ошибка: {msg}")
         
