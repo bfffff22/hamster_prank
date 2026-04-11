@@ -792,46 +792,104 @@ except:
             
             if "ModuleNotFoundError" in tk_out or "No module named" in tk_out:
                 print("✗ tkinter не установлен на удаленной машине!")
-                print("Устанавливаю tkinter...")
-                install_cmd = "sudo apt-get install -y python3-tk 2>&1 || sudo dnf install -y python3-tkinter 2>&1 || sudo pacman -S --noconfirm tk 2>&1"
-                inst_success, inst_out = self.client.execute_command(install_cmd)
-                print(f"Установка: {inst_out.strip()[:200]}")
+                print("\nВыберите действие:")
+                print("1. Попробовать установить tkinter (требуется sudo)")
+                print("2. Запустить консольную версию (без GUI)")
+                print("0. Отмена")
                 
-                # Проверяем снова
-                tk_check2, tk_out2 = self.client.execute_command("python3 -c 'import tkinter' 2>&1")
-                if "ModuleNotFoundError" in tk_out2 or "No module named" in tk_out2:
-                    print("✗ Не удалось установить tkinter автоматически")
-                    print("Выполните на удаленной машине: sudo apt-get install python3-tk")
+                choice = input("\nВаш выбор: ").strip()
+                
+                if choice == '1':
+                    print("Устанавливаю tkinter...")
+                    install_cmd = "sudo apt-get install -y python3-tk 2>&1 || sudo dnf install -y python3-tkinter 2>&1 || sudo pacman -S --noconfirm tk 2>&1"
+                    inst_success, inst_out = self.client.execute_command(install_cmd)
+                    
+                    if "password" in inst_out.lower() or "sudo" in inst_out.lower():
+                        print("✗ Требуется пароль sudo или нет прав")
+                        print("Попросите администратора установить: python3-tk")
+                        import os
+                        os.unlink(local_path)
+                        return
+                    
+                    # Проверяем снова
+                    tk_check2, tk_out2 = self.client.execute_command("python3 -c 'import tkinter' 2>&1")
+                    if "ModuleNotFoundError" in tk_out2 or "No module named" in tk_out2:
+                        print("✗ Не удалось установить tkinter")
+                        import os
+                        os.unlink(local_path)
+                        return
+                    else:
+                        print("✓ tkinter установлен!")
+                
+                elif choice == '2':
+                    print("\nЗапускаю консольную версию...")
+                    # Показываем текст в консоли с анимацией
+                    console_script = f'''#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import time
+import sys
+import math
+
+text = "{text}"
+duration = {duration}
+start_time = time.time()
+
+try:
+    while time.time() - start_time < duration:
+        # Очищаем экран
+        print("\\033[2J\\033[H", end="")
+        
+        # Вычисляем волну
+        current_time = time.time() - start_time
+        lines = []
+        for i, char in enumerate(text):
+            offset = int(5 * math.sin(current_time * 5 + i * 0.5))
+            lines.append(" " * (40 + offset) + char)
+        
+        # Выводим по центру экрана
+        print("\\n" * 10)
+        for line in lines:
+            print(line)
+        
+        sys.stdout.flush()
+        time.sleep(0.05)
+    
+    print("\\033[2J\\033[H")  # Очищаем в конце
+except KeyboardInterrupt:
+    print("\\033[2J\\033[H")
+'''
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                        f.write(console_script)
+                        console_path = f.name
+                    
+                    remote_console = "/tmp/.wave_console.py"
+                    self.client.upload_file(console_path, remote_console)
+                    self.client.execute_command(f"chmod +x {remote_console}")
+                    self.client.execute_command(f"python3 {remote_console} &")
+                    
+                    import os
+                    os.unlink(console_path)
+                    os.unlink(local_path)
+                    
+                    print("✓ Консольная версия запущена!")
+                    return
+                else:
                     import os
                     os.unlink(local_path)
                     return
-                else:
-                    print("✓ tkinter установлен!")
             else:
                 print("✓ tkinter доступен")
             
             # Даем права на X11 и запускаем
             print("Настраиваю X11...")
             xhost_success, xhost_out = self.client.execute_command("export DISPLAY=:0 && xhost +local: 2>&1")
-            print(f"xhost: {xhost_out.strip()}")
-            
-            print("Делаю скрипт исполняемым...")
-            self.client.execute_command(f"chmod +x {remote_path}")
             
             print("Запускаю GUI...")
-            exec_success, exec_out = self.client.execute_command(f"DISPLAY=:0 python3 {remote_path} 2>&1 &")
+            self.client.execute_command(f"chmod +x {remote_path}")
+            self.client.execute_command(f"DISPLAY=:0 python3 {remote_path} 2>&1 &")
             
-            if exec_out.strip():
-                print(f"Вывод: {exec_out.strip()}")
-            
-            time.sleep(2)
-            
-            # Проверяем процесс
-            ps_success, ps_out = self.client.execute_command("ps aux | grep wave_text | grep -v grep")
-            if "python3" in ps_out:
-                print("✓ Процесс запущен и работает!")
-            else:
-                print("⚠ Процесс завершился (возможно анимация уже закончилась)")
+            time.sleep(1)
             
             print("✓ Wave text запущен на удаленной машине")
         else:
