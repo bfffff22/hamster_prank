@@ -558,8 +558,43 @@ class HamsterPrank:
                 if confirm == 'y':
                     print("\nБлокирую экран на удаленке...")
                     # Сначала определяем текущую среду рабочего стола
+                    # Пробуем разные способы определения
                     desktop_env_result, desktop_env_output = pranks.client.execute_command('echo $XDG_CURRENT_DESKTOP')
                     desktop_env = desktop_env_output.strip().lower() if desktop_env_output.strip() else "unknown"
+                    
+                    # Если не удалось через XDG_CURRENT_DESKTOP, пробуем другие методы
+                    if desktop_env == "unknown":
+                        # Проверим процесс запущенного оконного менеджера
+                        process_result, process_output = pranks.client.execute_command('ps -e | grep -E "(cinnamon|gnome|kde|plasma|xfce|lxde|mate)" | head -1')
+                        if process_output.strip():
+                            process = process_output.strip().lower()
+                            if 'cinnamon' in process:
+                                desktop_env = 'cinnamon'
+                            elif 'gnome' in process:
+                                desktop_env = 'gnome'
+                            elif 'kde' in process or 'plasma' in process:
+                                desktop_env = 'kde'
+                            elif 'xfce' in process:
+                                desktop_env = 'xfce'
+                            elif 'lxde' in process:
+                                desktop_env = 'lxde'
+                            elif 'mate' in process:
+                                desktop_env = 'mate'
+                    
+                    # Если всё ещё unknown, пробуем через env переменные
+                    if desktop_env == "unknown":
+                        env_result, env_output = pranks.client.execute_command('env | grep -i desktop')
+                        if env_output.strip():
+                            env_vars = env_output.lower()
+                            if 'cinnamon' in env_vars:
+                                desktop_env = 'cinnamon'
+                            elif 'gnome' in env_vars:
+                                desktop_env = 'gnome'
+                            elif 'kde' in env_vars or 'plasma' in env_vars:
+                                desktop_env = 'kde'
+                            elif 'xfce' in env_vars:
+                                desktop_env = 'xfce'
+                    
                     print(f"Текущая среда рабочего стола: {desktop_env}")
                     
                     # Формируем список команд в зависимости от среды
