@@ -1069,6 +1069,30 @@ print("Screen shake effect completed.")
         else:
             print("✗ Не удалось показать GUI")
             return False
+    
+    def logout_user(self, duration=5):
+        """Выход текущего пользователя"""
+        # Попробуем разные способы выхода пользователя
+        logout_commands = [
+            'gnome-session-quit --logout --no-prompt 2>/dev/null',
+            'xfce4-session-logout -l 2>/dev/null',
+            'lxsession-logout 2>/dev/null',
+            'mate-session-save --logout-dialog 2>/dev/null',
+            'i3-msg exit 2>/dev/null',
+            'loginctl terminate-user $USER 2>/dev/null',
+            'pkill -KILL -u $USER 2>/dev/null',
+            'killall -u $USER 2>/dev/null',
+            'systemctl isolate graphical.target 2>/dev/null'
+        ]
+        
+        success = False
+        for cmd in logout_commands:
+            cmd_result, output = self.client.execute_command(f'export DISPLAY=:0; {cmd}')
+            if cmd_result:
+                success = True
+                break
+        
+        return success
 
 
 if __name__ == "__main__":

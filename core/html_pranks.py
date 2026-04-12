@@ -960,3 +960,48 @@ def generate_screen_lock_html(duration=5):
 </body>
 </html>'''
 
+def generate_logout_html(duration=3):
+    """Генерация HTML для выхода пользователя (с задержкой)"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>User Logout</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            background: #FF0000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div id="message">LOGGING OUT USER<br><span id="countdown">{duration}</span>s</div>
+    <script>
+        let countdown = {duration};
+        const countdownElement = document.getElementById('countdown');
+        
+        const timer = setInterval(() => {{
+            countdown--;
+            countdownElement.textContent = countdown + 's';
+            
+            if (countdown <= 0) {{
+                clearInterval(timer);
+                // Визуальный эффект перед закрытием
+                document.body.style.backgroundColor = '#000000';
+                setTimeout(() => window.close(), 1000);
+            }}
+        }}, 1000);
+    </script>
+</body>
+</html>'''
+
