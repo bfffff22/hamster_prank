@@ -557,19 +557,48 @@ class HamsterPrank:
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
                     print("\nБлокирую экран на удаленке...")
-                    # Сначала пробуем стандартные команды
-                    lock_commands = [
-                        'gnome-screensaver-command --lock',
-                        'xscreensaver-command -lock', 
-                        'dm-tool lock',
-                        'loginctl lock-session',
-                        'i3lock -c 000000',  # альтернатива для i3
-                        'light-locker-command --lock'
-                    ]
+                    # Сначала определяем текущую среду рабочего стола
+                    desktop_env_result, desktop_env_output = pranks.client.execute_command('echo $XDG_CURRENT_DESKTOP')
+                    desktop_env = desktop_env_output.strip().lower() if desktop_env_output.strip() else "unknown"
+                    print(f"Текущая среда рабочего стола: {desktop_env}")
+                    
+                    # Формируем список команд в зависимости от среды
+                    lock_commands = []
+                    
+                    # Сначала пробуем команды, зависящие от среды
+                    if 'cinnamon' in desktop_env:
+                        lock_commands.extend([
+                            'DISPLAY=:0 cinnamon-screensaver-command -l',
+                            'DISPLAY=:0 cinnamon-screensaver --lock'
+                        ])
+                    if 'gnome' in desktop_env:
+                        lock_commands.extend([
+                            'DISPLAY=:0 gnome-screensaver-command -l',
+                            'DISPLAY=:0 gnome-screensaver --lock'
+                        ])
+                    if 'kde' in desktop_env or 'plasma' in desktop_env:
+                        lock_commands.extend([
+                            'DISPLAY=:0 qdbus org.kde.screensaver /ScreenSaver Lock',
+                            'DISPLAY=:0 qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock'
+                        ])
+                    if 'xfce' in desktop_env:
+                        lock_commands.extend([
+                            'DISPLAY=:0 xfce4-screenshooter -l'
+                        ])
+                    
+                    # Затем общие команды
+                    lock_commands.extend([
+                        'DISPLAY=:0 loginctl lock-session',
+                        'DISPLAY=:0 dm-tool lock',
+                        'DISPLAY=:0 i3lock -c 000000',  # альтернатива для i3
+                        'DISPLAY=:0 xscreensaver-command -lock',
+                        'DISPLAY=:0 light-locker-command --lock',
+                        'DISPLAY=:0 gnome-screensaver-command --lock'
+                    ])
                     
                     success = False
                     for cmd in lock_commands:
-                        cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1')
+                        cmd_result, output = pranks.client.execute_command(f'{cmd} 2>&1')
                         # Проверяем, что команда выполнена и не содержала ошибок
                         if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower() and 'not found' not in output.lower():
                             success = True
