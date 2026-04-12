@@ -465,7 +465,6 @@ class HamsterPrank:
             print("6. Озвучить текст (через браузер)")
             print("7. Блокировка экрана (через браузер)")
             print("8. Блокировка экрана (команда)")
-            print("9. Выход пользователя (через браузер)")
             print("0. Назад")
             print()
             
@@ -573,11 +572,10 @@ class HamsterPrank:
                     success = False
 
                     for cmd in lock_commands:
-
                         cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1 || true')
-                    if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower():
-                        success = True
-                        break
+                        if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower():
+                            success = True
+                            break
                 
                 if not success:
                     # Если стандартные команды не работают, пробуем через Python GUI
@@ -663,38 +661,6 @@ root.mainloop()
                     os.unlink(local_path)
                 
                 print("✓ Экран заблокирован!" if success else "⚠ Блокировка экрана возможна не выполнена")
-                input("\nНажми Enter...")
-            elif choice == '9':
-                print("\nВыхожу из пользователя на удаленке через HTML...")
-                from core.html_pranks import generate_logout_html
-                html_content = generate_logout_html(5)  # 5 секунд
-                import tempfile
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
-                    f.write(html_content)
-                    local_path = f.name
-                
-                remote_path = f"/tmp/.logout_user.html"
-                success, msg = pranks.client.upload_file(local_path, remote_path)
-                
-                if success:
-                    # Открываем в браузере в полноэкранном режиме
-                    pranks.client.execute_command(f"DISPLAY=:0 firefox --kiosk file://{remote_path} 2>&1 || DISPLAY=:0 chromium --kiosk file://{remote_path} 2>&1 &")
-                    
-                    time.sleep(2)
-                    
-                    # Проверяем что браузер запустился
-                    ps_success, ps_out = pranks.client.execute_command("ps aux | grep -E 'firefox|chromium' | grep -v grep")
-                    if ps_out.strip():
-                        print("✓ Выход пользователя начат через HTML!")
-                        print("Окно закроется автоматически через 5 секунд")
-                    else:
-                        print("⚠ Браузер не найден")
-                        print("Установите firefox или chromium на удаленной машине")
-                else:
-                    print(f"✗ Ошибка загрузки: {msg}")
-                
-                import os
-                os.unlink(local_path)
                 input("\nНажми Enter...")
             else:
                 print("Неверный выбор!")
