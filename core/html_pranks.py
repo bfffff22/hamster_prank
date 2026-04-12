@@ -893,3 +893,70 @@ def generate_window_dance_html(cycles=5, duration=5):
 </body>
 </html>'''
 
+def generate_screen_lock_html(duration=5):
+    """Генерация HTML для блокировки экрана (через полноэкранное окно)"""
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Screen Lock</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: red;
+            font-family: Arial, sans-serif;
+            font-size: 60px;
+            font-weight: bold;
+            text-align: center;
+        }}
+        
+        #lockscreen {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            z-index: 9999;
+        }}
+        
+        #message {{
+            position: relative;
+            z-index: 10000;
+        }}
+    </style>
+</head>
+<body>
+    <div id="lockscreen"></div>
+    <div id="message">SCREEN LOCKED</div>
+    <script>
+        // Попытка установить полноэкранный режим
+        if (document.documentElement.requestFullscreen) {{
+            document.documentElement.requestFullscreen();
+        }}
+        
+        // Блокируем клавиши и действия
+        document.addEventListener('keydown', function(e) {{
+            if(e.key !== 'F5' && e.key !== 'F11' && e.key !== 'Escape') {{
+                e.preventDefault();
+                return false;
+            }}
+        }});
+        
+        document.addEventListener('mousedown', function(e) {{
+            e.preventDefault();
+            return false;
+        }});
+        
+        // Закрываем через заданное время
+        setTimeout(() => window.close(), {duration * 1000});
+    </script>
+</body>
+</html>'''
+

