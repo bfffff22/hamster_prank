@@ -559,25 +559,27 @@ class HamsterPrank:
                     print("\nБлокирую экран на удаленке...")
                     # Сначала пробуем стандартные команды
                     lock_commands = [
-
-                    'gnome-screensaver-command --lock',
-                    'xscreensaver-command -lock', 
-                    'dm-tool lock',
-                    'loginctl lock-session',
-                    'i3lock -c 000000',  # альтернатива для i3
-                    'light-locker-command --lock'
+                        'gnome-screensaver-command --lock',
+                        'xscreensaver-command -lock', 
+                        'dm-tool lock',
+                        'loginctl lock-session',
+                        'i3lock -c 000000',  # альтернатива для i3
+                        'light-locker-command --lock'
                     ]
-
-                
+                    
                     success = False
-
                     for cmd in lock_commands:
-                        cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1 || true')
-                        if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower():
+                        cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1')
+                        # Проверяем, что команда выполнена и не содержала ошибок
+                        if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower() and 'not found' not in output.lower():
                             success = True
+                            print(f"✓ Блокировка выполнена командой: {cmd}")
                             break
+                        else:
+                            print(f"  Команда '{cmd}' не сработала: {output.strip() if output.strip() else 'Empty output'}")
                 
                 if not success:
+                    print("Команды блокировки не сработали, пробуем через GUI...")
                     # Если стандартные команды не работают, пробуем через Python GUI
                     script = '''#!/usr/bin/env python3
 import tkinter as tk
