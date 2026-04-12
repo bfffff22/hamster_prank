@@ -556,8 +556,8 @@ class HamsterPrank:
             elif choice == '8':
                 confirm = input("Точно заблокировать экран? (y/n): ").strip().lower()
                 if confirm == 'y':
-                print("\nБлокирую экран на удаленке...")
-                # Сначала пробуем стандартные команды
+                    print("\nБлокирую экран на удаленке...")
+                    # Сначала пробуем стандартные команды
                     lock_commands = [
 
                     'gnome-screensaver-command --lock',
@@ -573,7 +573,7 @@ class HamsterPrank:
 
                     for cmd in lock_commands:
 
-                    cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1 || true')
+                        cmd_result, output = pranks.client.execute_command(f'DISPLAY=:0 {cmd} 2>&1 || true')
                     if cmd_result and 'error' not in output.lower() and 'failed' not in output.lower():
                         success = True
                         break
